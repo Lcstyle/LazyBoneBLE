@@ -1,0 +1,249 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/im_bg" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="50sp"
+            android:background="#212839">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="General Settings"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="50sp"
+                android:layout_height="fill_parent"
+                android:clickable="true"
+                android:gravity="center"
+                android:onClick="onBack"
+                android:text="Back"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20sp"
+            android:layout_marginTop="70sp"
+            android:layout_marginRight="20sp"
+            android:background="#212839"
+            android:orientation="vertical"
+            android:paddingLeft="5sp"
+            android:paddingRight="5sp">
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15sp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:gravity="left"
+                    android:text="@string/vanity_name"
+                    android:textSize="16sp" />
+
+
+                    <EditText
+                        android:id="@+id/vanity_name"
+                        android:layout_width="fill_parent"
+                        android:layout_height="40sp"
+                        android:layout_gravity="right"
+                        android:layout_marginEnd="1sp"
+                        android:layout_marginLeft="10sp"
+
+                        android:background="@color/white"
+                        android:gravity="end"
+                        android:maxLength="20"
+                        android:singleLine="true"
+                        android:text=""
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <!--                    <TextView-->
+                    <!--                        android:id="@+id/vanity_name"-->
+                    <!--                        android:layout_width="90sp"-->
+                    <!--                        android:layout_height="fill_parent"-->
+                    <!--                        android:gravity="center"-->
+                    <!--                        android:text="test"-->
+                    <!--                        android:textColor="#99FF66"-->
+                    <!--                        android:textSize="16sp" />-->
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15sp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:gravity="left"
+                    android:text="@string/bt_triggering_dev_name"
+                    android:textSize="16sp" />
+
+
+                <EditText
+                    android:id="@+id/et_trigger_dev_name"
+                    android:layout_width="fill_parent"
+                    android:layout_height="40sp"
+                    android:layout_gravity="right"
+                    android:layout_marginEnd="1sp"
+                    android:layout_marginLeft="10sp"
+
+                    android:background="@color/white"
+                    android:gravity="end"
+                    android:maxLength="20"
+                    android:singleLine="true"
+                    android:text=""
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
+
+                <!--                    <TextView-->
+                <!--                        android:id="@+id/vanity_name"-->
+                <!--                        android:layout_width="90sp"-->
+                <!--                        android:layout_height="fill_parent"-->
+                <!--                        android:gravity="center"-->
+                <!--                        android:text="test"-->
+                <!--                        android:textColor="#99FF66"-->
+                <!--                        android:textSize="16sp" />-->
+
+            </LinearLayout>
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="60sp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:gravity="center"
+                    android:text="Scan Period"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:layout_width="30sp"
+                        android:layout_height="fill_parent"
+                        android:background="@color/transparent"
+                        android:onClick="onMinusScanTime"
+                        android:text="-"
+                        android:textColor="#99FF66"
+                        android:textSize="25sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_scanPeriod"
+                        android:layout_width="90sp"
+                        android:layout_height="fill_parent"
+                        android:gravity="center"
+                        android:text="30S"
+                        android:textColor="#99FF66"
+                        android:textSize="16sp" />
+
+                    <Button
+                        android:layout_width="30sp"
+                        android:layout_height="fill_parent"
+                        android:background="@color/transparent"
+                        android:onClick="onPlusScanTime"
+                        android:text="+"
+                        android:textColor="#99FF66"
+                        android:textSize="25sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </RelativeLayout>
+
+<!--            <View-->
+<!--                android:layout_width="fill_parent"-->
+<!--                android:layout_height="0.1sp"-->
+<!--                android:alpha="0.5"-->
+<!--                android:background="@color/gray_text" />-->
+
+            <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="60sp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:gravity="center"
+                    android:text="Auto Connect Period"
+                    android:textColor="@color/white"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:layout_width="30sp"
+                        android:layout_height="fill_parent"
+                        android:background="@color/transparent"
+                        android:onClick="onMinusAutoConnectTime"
+                        android:text="-"
+                        android:textColor="#99FF66"
+                        android:textSize="25sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_autoConnectTime"
+                        android:layout_width="90sp"
+                        android:layout_height="fill_parent"
+                        android:gravity="center"
+                        android:text="15S"
+                        android:textColor="#99FF66"
+                        android:textSize="16sp" />
+
+                    <Button
+                        android:layout_width="30sp"
+                        android:layout_height="fill_parent"
+                        android:background="@color/transparent"
+                        android:onClick="onAddAutoConnectTime"
+                        android:text="+"
+                        android:textColor="#99FF66"
+                        android:textSize="25sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </RelativeLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="35sp"
+        android:contentDescription="@string/alert_dialog_no"
+        android:src="@drawable/im_logo" />
+
+</RelativeLayout>

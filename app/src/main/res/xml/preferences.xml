@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="设置">
+
+<!-- 		<CheckBoxPreference android:key="upload_data_preference" -->
+<!-- 			android:defaultValue="false" android:title="Enable Data Upload" -->
+<!-- 			android:summaryOff="Disable http data upload" android:summaryOn="Enable http data upload" -->
+<!-- 			android:dialogTitle="Enable Data Upload" /> -->
+<!-- 		<EditTextPreference android:key="phone_num_preference" -->
+<!-- 			android:defaultValue="10086" android:title="客服电话" android:summary="请输入会更改你的客服电话" -->
+<!-- 			android:dialogTitle="客服电话" /> -->
+
+<!-- 		<EditTextPreference android:key="upload_url_preference" -->
+<!-- 			android:defaultValue="http://www.ral.ucar.edu/~lambi/obd/get_data.php" -->
+<!-- 			android:title="上传Ip地址" android:summary="此地址将实时接收车载信息" -->
+<!-- 			android:dialogTitle="上传Ip地址" /> -->
+<!-- 		<EditTextPreference android:key="upload_port_preference" -->
+<!-- 			android:defaultValue="10000" android:title="上传端口" android:summary="此端口将实时接收车载信息" -->
+<!-- 			android:dialogTitle="上传端口" /> -->
+		<CheckBoxPreference android:key="receive_data_preference"
+			android:defaultValue="true" android:title="蓝牙自动接入"
+			android:summaryOff="在编辑框输入文字时，蓝牙输入自动开启，《已关闭》" android:summaryOn="在编辑框输入文字时，蓝牙输入自动开启，《已开启》"
+			android:dialogTitle="自动接听语音" />
+<!-- 		<EditTextPreference android:key="sendvioce_url_preference" -->
+<!-- 			android:defaultValue="http://192.168.120.188:15000/post/" -->
+<!-- 			android:title="语音上传网址" android:summary="将你的语音信息通过网络上传" -->
+<!-- 			android:dialogTitle="上传网址" /> -->
+<!-- 		<EditTextPreference android:key="receivevioce_url_preference" -->
+<!-- 			android:defaultValue="http://192.168.120.188:15000/" android:title="语音下载网址" -->
+<!-- 			android:summary="将你的语音信息通过网络上传" android:dialogTitle="下载网址" /> -->
+			
+<!-- 		<ListPreference android:key="carmates_list_preference" -->
+<!-- 			android:title="好友分组列表" android:summary="你所有好友的分组列表，选择你参与的群组." -->
+<!-- 			android:dialogTitle="好友分组列表" /> -->
+
+<!-- 		<EditTextPreference android:key="vehicle_id_preference" -->
+<!-- 			android:defaultValue="" android:title="Vehicle ID" -->
+<!-- 			android:summary="Optional unique id of this vehicle, used with uploaded data" -->
+<!-- 			android:dialogTitle="Vehicle ID" /> -->
+
+		<ListPreference android:key="bluetooth_list_preference"
+			android:title="蓝牙设备列表" android:summary="当前已经搜索到的蓝牙设备列表."
+			android:dialogTitle="蓝牙设备列表" />
+
+<!-- 		<CheckBoxPreference android:key="imperial_units_preference" -->
+<!-- 			android:defaultValue="false" android:title="Imperial Units" -->
+<!-- 			android:summaryOff="Enable imperial units" android:summaryOn="Go back to metric units" -->
+<!-- 			android:dialogTitle="Imperial Units" /> -->
+
+<!-- 		<CheckBoxPreference android:key="enable_gps_preference" -->
+<!-- 			android:defaultValue="false" android:title="Enable GPS" -->
+<!-- 			android:summaryOff="Turn on GPS" android:summaryOn="Turn off GPS" -->
+<!-- 			android:dialogTitle="Enable GPS" /> -->
+
+<!-- 		<EditTextPreference android:key="update_period_preference" -->
+<!-- 			android:defaultValue="1" android:title="更新周期" -->
+<!-- 			android:summary="每个多少秒运行一次" -->
+<!-- 			android:dialogTitle="更新周期" /> -->
+
+<!-- 		<EditTextPreference android:key="string_prefix" -->
+<!-- 			android:defaultValue="" android:title="添加前缀" -->
+<!-- 			android:summary="在每一个返回结果中添加前缀" -->
+<!-- 			android:dialogTitle="添加前缀" /> -->
+
+<!-- 		<EditTextPreference android:key="string_suffix" -->
+<!-- 			android:defaultValue="" android:title="添加命令" -->
+<!-- 			android:summary="通过键盘输入一个命令" -->
+<!-- 			android:dialogTitle="添加命令" /> -->
+
+<!-- 		<EditTextPreference android:key="engine_displacement_preference" -->
+<!-- 			android:defaultValue="1.6" android:title="Engine Displacement (liters)" -->
+<!-- 			android:summary="Used for fuel economy on vehicles without MAF sensor" -->
+<!-- 			android:dialogTitle="Engine Displacement (liters)" /> -->
+
+<!-- 		<EditTextPreference android:key="reader_config_preference" -->
+<!-- 			android:defaultValue="atsp0\natz" android:title="Reader Config Commands" -->
+<!-- 			android:summary="Commands to configure bluetooth reader, separate with new line" -->
+<!-- 			android:dialogTitle="Reader Config Commands" /> -->
+
+
+<EditTextPreference android:key="string_suffix1"
+			android:defaultValue="" android:title="添加命令"
+			android:summary="通过键盘输入一个命令"
+			android:dialogTitle="添加命令" />
+		<EditTextPreference android:key="string_suffix2"
+			android:defaultValue="" android:title="测试项"
+			android:summary="点击此项，进行测试"
+			android:dialogTitle="测试项" />
+			
+	</PreferenceCategory>
+	<PreferenceCategory android:title="AT Commands">
+	
+	
+	
+			
+		<PreferenceScreen android:key="obd_commands_screen"
+			android:title="AT Commands"
+			android:summary="选择你需要的运行指令.">
+		</PreferenceScreen>
+	</PreferenceCategory>
+</PreferenceScreen>

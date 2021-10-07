@@ -1,0 +1,45 @@
+<resources>
+
+    <color name="main_color">#29A300</color>
+    <color name="simple_main_color">#27AE62</color>
+    <color name="white">#FFFFFF</color>
+    <color name="gray">#C9C2C2</color>
+    <color name="simple_grya">#50C9C2C2</color>
+    <color name="topbar_color">#15B74E</color>
+    <color name="gray_text">#858585</color>
+    <color name="bg_1_color">#F7F7F7</color>
+    <color name="bg_2_color">#EEEEEE</color>
+    <color name="bg_3_color">#D3D9D1</color>
+    <color name="gray_dark">#666666</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+    <color name="half_trans">#50000000</color>
+    <color name="red">#FF3300</color>
+    <color name="tab_normal">#BCBCBC</color>
+    <color name="btn_yellow">#F46C00</color>
+    <color name="btn_yellow_pressed">#50FF9900</color>
+    <color name="btn_red_pressed">#50FF3300</color>
+    <color name="shop_text1">#F39800</color>
+    <color name="half_top_color">#5015B74E</color>
+    <color name="half_gray">#50858585</color>
+    <color name="result_view">#b0000000</color>
+    <color name="viewfinder_mask">#60000000</color>
+    <color name="possible_result_points">#c0ffff00</color>
+    <color name="qfk_normal">#FF0000</color>
+    <color name="qfk_pressed">#A0FF0000</color>
+    <color name="qrwx_normal">#15B74E</color>
+    <color name="qrwx_pressed">#A015B74E</color>
+    <color name="qyy_normal">#443FF5</color>
+    <color name="qyy_pressed">#A0443FF5</color>
+    <color name="zcgm_nromal">#00C2A6</color>
+    <color name="zcgm_pressed">#A000C2A6</color>
+    <color name="half_back">#A0FFFFFF</color>
+    <color name="jijiaColor">#228B22</color>
+    <color name="yibanColor">#4D4D4D</color>
+    <color name="zhaogaoColor">#FF0000</color>
+    <color name="tab_presed">#228B22</color>
+    <color name="tab_nopresed">#787878</color>
+    <color name="half_gray1">#A0C9C2C2</color>
+    <color name="sblue">#3BA8FC</color>
+
+</resources>

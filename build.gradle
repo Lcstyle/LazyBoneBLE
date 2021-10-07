@@ -1,0 +1,22 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()//加上这行
+        //用这个替换jcenter()，避免长时间下载不成功jcenter()
+        maven{ url 'https://maven.aliyun.com/nexus/content/groups/public/'}
+//        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.0.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()//加上这行
+        mavenLocal()
+        //用这个替换jcenter()，避免长时间下载不成功jcenter()
+        maven{ url 'https://maven.aliyun.com/nexus/content/groups/public/'}
+//        jcenter()
+    }
+}

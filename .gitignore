@@ -1,0 +1,13 @@
+app/build
+app/libs
+gradle
+.gradle
+.idea
+local.properties
+gradle.*
+*.log
+*.DS_Store
+/app/src/main/res/values/google_maps_api.xml
+/gradlew
+/gradlew.bat
+/import-summary.txt
