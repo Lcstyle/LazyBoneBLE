@@ -48,9 +48,8 @@ public class BluetoothLeService extends Service {
 	public void WriteBytes(byte[] datas) {
 		if (mNotifyCharacteristic != null && datas != null) {
 			mNotifyCharacteristic.setValue(datas);
-			if (mBluetoothGatt != null) {
+			if (mBluetoothGatt != null)
 				mBluetoothGatt.writeCharacteristic(mNotifyCharacteristic);
-			}
 		}
 	}
 
@@ -62,14 +61,11 @@ public class BluetoothLeService extends Service {
 		for (BluetoothGattService gattService : gattServices) {
 			LogUtil.e(gattService.getUuid().toString());
 			LogUtil.e(UUID_SERVICE.toString());
-			if (gattService.getUuid().toString()
-					.equalsIgnoreCase(UUID_SERVICE.toString())) {
-				List<BluetoothGattCharacteristic> gattCharacteristics = gattService
-						.getCharacteristics();
+			if (gattService.getUuid().toString().equalsIgnoreCase(UUID_SERVICE.toString())) {
+				List<BluetoothGattCharacteristic> gattCharacteristics = gattService.getCharacteristics();
 				LogUtil.e("Count is:" + gattCharacteristics.size());
 				for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
-					if (gattCharacteristic.getUuid().toString()
-							.equalsIgnoreCase(UUID_NOTIFY.toString())) {
+					if (gattCharacteristic.getUuid().toString().equalsIgnoreCase(UUID_NOTIFY.toString())) {
 						mNotifyCharacteristic = gattCharacteristic;
 						setCharacteristicNotification(gattCharacteristic, true);
 						broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
@@ -112,8 +108,7 @@ public class BluetoothLeService extends Service {
 		}
 
 		@Override
-		public void onCharacteristicRead(BluetoothGatt gatt,
-				BluetoothGattCharacteristic characteristic, int status) {
+		public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
 			LogUtil.e("onCharacteristicRead: " + status);
 			if (status == BluetoothGatt.GATT_SUCCESS)
 				broadcastUpdate(characteristic);
@@ -125,9 +120,7 @@ public class BluetoothLeService extends Service {
 		}
 
 		@Override
-		public void onCharacteristicWrite(BluetoothGatt gatt,
-				BluetoothGattCharacteristic characteristic, int status) {
-		}
+		public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {}
 
 		@Override
 		public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor bd, int status) {
@@ -229,9 +222,9 @@ public class BluetoothLeService extends Service {
 	}
 
 	public void close() {
-		if (mBluetoothGatt == null) {
+		if (mBluetoothGatt == null)
 			return;
-		}
+
 		mBluetoothGatt.close();
 		mBluetoothGatt = null;
 	}

@@ -59,7 +59,6 @@ import static com.tinysine.lazyboneble.SettingsActivity.VANITY_NAME_KEY;
 public class Bluemd extends Activity {
 
 	private ImageView iv_connect_status;
-	private ImageView iv_logo1; // logo Control
 	private Button btn_connect_name;
 	private Button btn_status;
 
@@ -341,7 +340,14 @@ public class Bluemd extends Activity {
 		iv_connect_status = findViewById(R.id.iv_connect_status);
 		btn_connect_name = findViewById(R.id.btn_connect_name);
 		btn_status = findViewById(R.id.btn_status);
-		iv_logo1 = findViewById(R.id.logo);
+
+		// logo Control
+		ImageView iv_logo1 = findViewById(R.id.logo);
+		iv_logo1.setOnClickListener(v -> {
+			LogUtil.e("1111111111111111111111111111111111111111");
+			if (!isConnected && !TextUtils.isEmpty(address))
+				checkIsConnect();
+		});
 
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (mBluetoothAdapter == null)
@@ -361,15 +367,6 @@ public class Bluemd extends Activity {
 			}
 
 		VANITY_NAME = preferences.getString(VANITY_NAME_KEY, "");
-
-		iv_logo1 = findViewById(R.id.logo);
-
-		iv_logo1.setOnClickListener(v -> {
-			LogUtil.e("1111111111111111111111111111111111111111");
-			if (!isConnected && !TextUtils.isEmpty(address))
-				checkIsConnect();
-		});
-
 
 		btn_status.setOnClickListener(v -> {
 			resetAutoDisconnect();
@@ -398,9 +395,6 @@ public class Bluemd extends Activity {
 		pDialog = new ProgressDialog(this);
 		pDialog.setMessage("Verifying...");
 		pDialog.setCancelable(false);
-
-		//		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-		//		LogUtil.e("Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));
 
 		LinearLayout ll_bgLayout = findViewById(R.id.ll_bg);
 		ll_bgLayout.setOnClickListener(arg0 -> openOptionsMenu());
@@ -517,7 +511,6 @@ public class Bluemd extends Activity {
 
 	private BluetoothAdapter mBluetoothAdapter = null;
 	private boolean mEnablingBT = false;
-
 	private static final int REQUEST_ENABLE_BT = 2;
 
 	@Override
@@ -535,8 +528,7 @@ public class Bluemd extends Activity {
 						.setIcon(android.R.drawable.ic_dialog_alert)
 						.setTitle(R.string.alert_dialog_warning_title)
 						.setCancelable(false)
-						.setPositiveButton(R.string.alert_dialog_yes,
-								(dialog, id) -> {
+						.setPositiveButton(R.string.alert_dialog_yes, (dialog, id) -> {
 									mEnablingBT = true;
 									Intent enableIntent = new Intent( BluetoothAdapter.ACTION_REQUEST_ENABLE );
 									startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
@@ -554,8 +546,7 @@ public class Bluemd extends Activity {
 				.setIcon(android.R.drawable.ic_dialog_info)
 				.setTitle(R.string.app_name)
 				.setCancelable(false)
-				.setPositiveButton(R.string.alert_dialog_ok,
-						(dialog, id) -> finish());
+				.setPositiveButton(R.string.alert_dialog_ok, (dialog, id) -> finish());
 		AlertDialog alert = builder.create();
 		alert.show();
 	}
@@ -564,11 +555,11 @@ public class Bluemd extends Activity {
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		menu.clear();
 		MenuInflater inflater = getMenuInflater();
-		if (isNeedPassword) {
+		if (isNeedPassword)
 			inflater.inflate(R.menu.option_menu, menu);
-		} else {
+		else
 			inflater.inflate(R.menu.menu_nopass, menu);
-		}
+
 		return true;
 	}
 
@@ -694,9 +685,9 @@ public class Bluemd extends Activity {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		if (firstTimeThread != null) {
+		if (firstTimeThread != null)
 			firstTimeThread.StopThread();
-		}
+
 		unbindService(mServiceConnection);
 		mBluetoothLeService = null;
 		unregisterReceiver(receiver);
@@ -709,19 +700,6 @@ public class Bluemd extends Activity {
 		unregisterReceiver(mGattUpdateReceiver);
 	}
 
-//	/**
-//	 * Connect device by address
-//	 *
-//	 * @param address Bluetooth address
-//	 */
-//	private void live(String address) {
-////		if (mBluetoothLeService != null) {
-//			mBluetoothLeService.connect(address);
-//			pDialog.setMessage("Connecting...");
-//			pDialog.show();
-////		}
-//	}
-
 	private String mConnectedDeviceAddress = null;
 
 	@Override
@@ -732,8 +710,7 @@ public class Bluemd extends Activity {
 					.setIcon(android.R.drawable.ic_dialog_info)
 					.setTitle(R.string.app_name)
 					.setCancelable(false)
-					.setPositiveButton("Yes",
-							(dialog, id) -> {
+					.setPositiveButton("Yes",(dialog, id) -> {
 								android.os.Process.killProcess(android.os.Process.myPid());
 								Bluemd.this.finish();
 							})
@@ -926,17 +903,13 @@ public class Bluemd extends Activity {
 			super.run();
 			try {
 				sleep(3000);
-				if (!isStop && !isModeConnectSuccess) {
+				if (!isStop && !isModeConnectSuccess)
 					sendStatus();
-				}
 			} catch (Exception ignored) {
 			}
 		}
-
 		public void modeStop() {
 			isStop = true;
 		}
-
 	}
-
 }

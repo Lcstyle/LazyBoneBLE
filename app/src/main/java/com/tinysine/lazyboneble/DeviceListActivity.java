@@ -81,10 +81,7 @@ public class DeviceListActivity extends Activity {
 		editor = preferences.edit();
 		AUTO_CONNECT_SCAN_PERIOD = preferences.getLong(AUTO_CONNECT_SCAN_PERIOD_KEY, 15000);
 		GENERAL_SCAN_PERIOD = preferences.getLong(GENERAL_SCAN_PERIOD_KEY, 30000);
-		preferences.getString(registered_device_name_key, "Lazy");
 		setResult(Activity.RESULT_CANCELED);
-		//editor.putString(DeviceListActivity.registered_device_password_key, "");
-		//editor.commit();
 		reg_dev_name = preferences.getString(registered_device_name_key, "");
 		mNewDevicesArrayAdapter = new LeDeviceListAdapter(this);
 		mPairedDevicesArrayAdapter = new LeDeviceListAdapter(this);
@@ -133,9 +130,8 @@ public class DeviceListActivity extends Activity {
 				BLEDevice de = mPairedDevicesArrayAdapter.getDevice(arg2);
 				String address = de.getAddress();
 				if (address == null || address.equals(""))
-					{
 						return;
-					}
+
 				Intent intent = new Intent();
 				intent.putExtra(DEVICE_NAME_KEY, de.getName());
 				intent.putExtra(DEVICE_ADDRESS_KEY, address);
@@ -149,9 +145,9 @@ public class DeviceListActivity extends Activity {
 				mBluetoothAdapter.stopLeScan(mLeScanCallback);
 				BLEDevice de = mNewDevicesArrayAdapter.getDevice(arg2);
 				String address = de.getAddress();
-				if (address == null || address.equals("")) {
+				if (address == null || address.equals(""))
 					return;
-				}
+
 				Intent intent = new Intent();
 				intent.putExtra(DEVICE_NAME_KEY, de.getName());
 				intent.putExtra(DEVICE_ADDRESS_KEY, address);
@@ -204,6 +200,7 @@ public class DeviceListActivity extends Activity {
 		// If we're already discovering, stop it
 		if (mBluetoothAdapter.isDiscovering())
 			mBluetoothAdapter.cancelDiscovery();
+
 		scanLeDevice();
 	}
 
@@ -214,8 +211,8 @@ public class DeviceListActivity extends Activity {
 		// If we're already discovering, stop it
 		if (mBluetoothAdapter.isDiscovering())
 			mBluetoothAdapter.cancelDiscovery();
-		Toast.makeText(this, "Scanning for nearby Registered Device", Toast.LENGTH_SHORT).show();
 
+		Toast.makeText(this, "Scanning for nearby Registered Device", Toast.LENGTH_SHORT).show();
 		findRegisteredLeDevice();
 	}
 
@@ -224,10 +221,9 @@ public class DeviceListActivity extends Activity {
 	private void scanLeDevice() {
 		mHandler.postDelayed(() -> {
 			if (mScanning)
-			{
 				stopFind();
-			}
 		}, GENERAL_SCAN_PERIOD);
+
 		mScanning = true;
 		mBluetoothAdapter.startLeScan(mLeScanCallback);
 	}

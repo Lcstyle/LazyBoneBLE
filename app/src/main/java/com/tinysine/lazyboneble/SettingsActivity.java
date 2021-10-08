@@ -53,7 +53,6 @@ public class SettingsActivity extends Activity
                 super.onDestroy();
                 update_vanity_name();
                 update_trigger_dev_name();
-
             }
 
         private void update_trigger_dev_name()

@@ -45,7 +45,6 @@ public class AutoStartReceiver extends BroadcastReceiver
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 String AUTO_CONNECT_BT_TRIGGER_DEV_NAME = prefs.getString(AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY, "");
                 createNotificationChannel(context);
-
                 String action = intent.getAction();
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 String device_name = device.getName();
@@ -54,9 +53,7 @@ public class AutoStartReceiver extends BroadcastReceiver
                         case BluetoothDevice.ACTION_ACL_CONNECTED:
                             Log.v("BTRECEIVER", "Device Connected: " + device_name);
                             if (device_name.contains(AUTO_CONNECT_BT_TRIGGER_DEV_NAME))
-                                {
                                     ActivateSwitch(context);
-                                }
                             break;
 
                         case BluetoothDevice.ACTION_ACL_DISCONNECTED:
@@ -82,10 +79,7 @@ public class AutoStartReceiver extends BroadcastReceiver
                     .setAutoCancel(true);
 
             Notification blueToothConnected = builder.build();
-
             NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
             notificationManager.notify(1, blueToothConnected);
-
         }
-
     }
