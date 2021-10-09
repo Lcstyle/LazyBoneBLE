@@ -28,26 +28,31 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         }
 
         List<Geofence> geofenceList = geofencingEvent.getTriggeringGeofences();
-        for (Geofence geofence: geofenceList) {
-            Log.d(TAG, "onReceive: " + geofence.getRequestId());
-        }
-        //        Location location = geofencingEvent.getTriggeringLocation();
-        int transitionType = geofencingEvent.getGeofenceTransition();
+        if (geofenceList != null)
+            {
+                for (Geofence geofence : geofenceList)
+                    {
+                        Log.d(TAG, "onReceive: " + geofence.getRequestId());
+                    }
+                //        Location location = geofencingEvent.getTriggeringLocation();
+                int transitionType = geofencingEvent.getGeofenceTransition();
 
-        switch (transitionType) {
-            case Geofence.GEOFENCE_TRANSITION_ENTER:
-                Toast.makeText(context, "Home GeoFence Entered", Toast.LENGTH_SHORT).show();
-                break;
-            case Geofence.GEOFENCE_TRANSITION_DWELL:
-                String msg = "Home Location Auto Shutdown Activated";
-                notificationHelper.sendHighPriorityNotification("LazyBone GeoFence", msg, Bluemd.class);
-                send_disconnect_request(context);
-                break;
-            case Geofence.GEOFENCE_TRANSITION_EXIT:
-                Toast.makeText(context, "Home GeoFence Exit", Toast.LENGTH_SHORT).show();
-                send_connect_request(context);
-                break;
-        }
+                switch (transitionType)
+                    {
+                        case Geofence.GEOFENCE_TRANSITION_ENTER:
+                            Toast.makeText(context, "Home GeoFence Entered", Toast.LENGTH_SHORT).show();
+                            break;
+                        case Geofence.GEOFENCE_TRANSITION_DWELL:
+                            String msg = "Home Location Auto Shutdown Activated";
+                            notificationHelper.sendHighPriorityNotification("LazyBone GeoFence", msg, Bluemd.class);
+                            send_disconnect_request(context);
+                            break;
+                        case Geofence.GEOFENCE_TRANSITION_EXIT:
+                            Toast.makeText(context, "Home GeoFence Exit", Toast.LENGTH_SHORT).show();
+                            send_connect_request(context);
+                            break;
+                    }
+            }
     }
 
     private void send_disconnect_request(Context context)

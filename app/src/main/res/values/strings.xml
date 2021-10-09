@@ -85,4 +85,6 @@
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="vanity_name">Vanity Name</string>
     <string name="bt_triggering_dev_name">BT Triggering Dev Name</string>
+    <string name="geofence_dwell_delay">GeoFence Dwell Delay</string>
+    <string name="auto_connect_period">Auto Connect Period</string>
 </resources>

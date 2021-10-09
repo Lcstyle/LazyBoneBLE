@@ -4,7 +4,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.Geofence;
@@ -12,15 +14,23 @@ import com.google.android.gms.location.GeofenceStatusCodes;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.concurrent.TimeUnit;
+
 import androidx.annotation.RequiresApi;
+
+import static com.tinysine.lazyboneble.SettingsActivity.GEOFENCE_DWELL_TIME_KEY;
 
 public class GeofenceHelper extends ContextWrapper {
 
     private static final String TAG = "GeofenceHelper";
+    private static int dwell_time_delay = 0;
+
     PendingIntent pendingIntent;
 
     public GeofenceHelper(Context base) {
         super(base);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(base);
+        dwell_time_delay = prefs.getInt(GEOFENCE_DWELL_TIME_KEY, 60);
     }
 
     public GeofencingRequest getGeofencingRequest(Geofence geofence) {
@@ -35,7 +45,7 @@ public class GeofenceHelper extends ContextWrapper {
                 .setCircularRegion(latLng.latitude, latLng.longitude, radius)
                 .setRequestId(ID)
                 .setTransitionTypes(transitionTypes)
-                .setLoiteringDelay(120000)
+                .setLoiteringDelay((int) TimeUnit.SECONDS.toMillis(dwell_time_delay))
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .build();
     }

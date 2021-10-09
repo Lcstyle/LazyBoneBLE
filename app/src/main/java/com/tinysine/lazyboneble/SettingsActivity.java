@@ -1,12 +1,18 @@
 package com.tinysine.lazyboneble;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.view.MenuInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.concurrent.TimeUnit;
 
@@ -14,18 +20,23 @@ public class SettingsActivity extends Activity
     {
         private TextView tv_scanTime;
         private TextView tv_autoConnectTime;
+        private TextView tv_geoFenceDwellDelay;
         private EditText et_vanity_name;
         private EditText et_trigger_dev_name;
         private static long AUTO_CONNECT_SCAN_PERIOD;
         private static long GENERAL_SCAN_PERIOD;
+        private static int GEOFENCE_DWELL_DELAY;
+
         private static String VANITY_NAME;
         public static String AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY = "bt_connect_trigger_dev";
         public static String AUTO_CONNECT_BT_TRIGGER_DEV_NAME;
         public static String AUTO_CONNECT_SCAN_PERIOD_KEY = "auto_scan_period";
         public static String GENERAL_SCAN_PERIOD_KEY = "general_scan_period";
+        public static String GEOFENCE_DWELL_TIME_KEY = "geofence_dwell_delay";
         public static String VANITY_NAME_KEY = "vanity_name";
 
         private SharedPreferences.Editor prefsEditor;
+
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -38,7 +49,13 @@ public class SettingsActivity extends Activity
                 prefsEditor = prefs.edit();
 
                 AUTO_CONNECT_SCAN_PERIOD = prefs.getLong(AUTO_CONNECT_SCAN_PERIOD_KEY, 15000);
+                tv_autoConnectTime.setText(String.format("%sS", TimeUnit.MILLISECONDS.toSeconds(AUTO_CONNECT_SCAN_PERIOD)));
+
                 GENERAL_SCAN_PERIOD = prefs.getLong(GENERAL_SCAN_PERIOD_KEY, 30000);
+                tv_scanTime.setText(String.format("%sS", TimeUnit.MILLISECONDS.toSeconds(GENERAL_SCAN_PERIOD)));
+
+                GEOFENCE_DWELL_DELAY = prefs.getInt(GEOFENCE_DWELL_TIME_KEY, 60);
+                tv_geoFenceDwellDelay.setText(String.format("%sS", GEOFENCE_DWELL_DELAY));
 
                 AUTO_CONNECT_BT_TRIGGER_DEV_NAME = prefs.getString(AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY, "");
                 et_trigger_dev_name.setText(AUTO_CONNECT_BT_TRIGGER_DEV_NAME);
@@ -62,6 +79,7 @@ public class SettingsActivity extends Activity
                     {
                         prefsEditor.putString(AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY, updated_trigger_dev_name);
                         prefsEditor.apply();
+                        Toast.makeText(this, "Triggering Device Name Updated", Toast.LENGTH_SHORT).show();
                     }
             }
 
@@ -72,8 +90,13 @@ public class SettingsActivity extends Activity
                     {
                         prefsEditor.putString(VANITY_NAME_KEY, updated_vanity_name);
                         prefsEditor.apply();
+                        Toast.makeText(this, "Vanity Name Updated", Toast.LENGTH_SHORT).show();
                     }
             }
+
+        public void onBack(View v) {
+            this.finish();
+        }
 
         private void updateScanTime()
         {
@@ -81,6 +104,7 @@ public class SettingsActivity extends Activity
             tv_scanTime.setText(String.format("%sS", seconds));
             prefsEditor.putLong(GENERAL_SCAN_PERIOD_KEY, GENERAL_SCAN_PERIOD);
             prefsEditor.apply();
+            Toast.makeText(this, "Scan Time Settings Updated", Toast.LENGTH_SHORT).show();
         }
 
         private void updateAutoConnectTime()
@@ -89,17 +113,95 @@ public class SettingsActivity extends Activity
             tv_autoConnectTime.setText(String.format("%sS", seconds));
             prefsEditor.putLong(AUTO_CONNECT_SCAN_PERIOD_KEY, AUTO_CONNECT_SCAN_PERIOD);
             prefsEditor.apply();
+            Toast.makeText(this, "AutoConnect Time Settings Updated", Toast.LENGTH_SHORT).show();
         }
 
+        private void updateGeoFenceDwellTime()
+            {
+                String seconds = Integer.toString(GEOFENCE_DWELL_DELAY);
+                tv_geoFenceDwellDelay.setText(String.format("%sS", seconds));
+                prefsEditor.putInt(GEOFENCE_DWELL_TIME_KEY, GEOFENCE_DWELL_DELAY);
+                prefsEditor.apply();
+                Toast.makeText(this, "GeoFence Dwell Time Settings Updated", Toast.LENGTH_SHORT).show();
+            }
+
+        @SuppressLint("ClickableViewAccessibility")
         private void init() {
             tv_autoConnectTime = findViewById(R.id.tv_autoConnectTime);
             tv_scanTime = findViewById(R.id.tv_scanPeriod);
+            tv_geoFenceDwellDelay = findViewById(R.id.tv_geoFenceDwellDelay);
             et_vanity_name = findViewById(R.id.vanity_name);
             et_trigger_dev_name = findViewById(R.id.et_trigger_dev_name);
-        }
 
-        public void onBack(View v) {
-            finish();
+            Button bt_geo_add_time = findViewById(R.id.bt_geo_add_time);
+            Button bt_geo_minus_time = findViewById(R.id.bt_geo_minus_time);
+
+            bt_geo_minus_time.setOnTouchListener(new View.OnTouchListener() {
+                private Handler mHandler;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent mEvent)
+                 {
+                     switch (mEvent.getAction())
+                         {
+                             case MotionEvent.ACTION_DOWN:
+                                 if (mHandler != null) return true;
+                                 mHandler = new Handler();
+                                 mHandler.postDelayed(minus_dwell_time, 500);
+                                 break;
+                             case MotionEvent.ACTION_UP:
+                                 if (mHandler == null) return true;
+                                 mHandler.removeCallbacks(minus_dwell_time);
+                                 updateGeoFenceDwellTime();
+                                 mHandler = null;
+                                 break;
+                         }
+                     return false;
+                 }
+
+                final Runnable minus_dwell_time = new Runnable() {
+                    @Override public void run() {
+                        if (GEOFENCE_DWELL_DELAY > 1)
+                                GEOFENCE_DWELL_DELAY -= 1;
+                        String seconds = Integer.toString(GEOFENCE_DWELL_DELAY);
+                        tv_geoFenceDwellDelay.setText(String.format("%sS", seconds));
+                        mHandler.postDelayed(this, 50);
+                    }
+                };
+            });
+
+            bt_geo_add_time.setOnTouchListener(new View.OnTouchListener() {
+                private Handler mHandler;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent mEvent)
+                    {
+                        switch (mEvent.getAction())
+                            {
+                                case MotionEvent.ACTION_DOWN:
+                                    if (mHandler != null) return true;
+                                    mHandler = new Handler();
+                                    mHandler.postDelayed(add_dwell_time, 500);
+                                    break;
+                                case MotionEvent.ACTION_UP:
+                                    if (mHandler == null) return true;
+                                    mHandler.removeCallbacks(add_dwell_time);
+                                    updateGeoFenceDwellTime();
+                                    mHandler = null;
+                                    break;
+                            }
+                        return false;
+                    }
+                final Runnable add_dwell_time = new Runnable() {
+                    @Override public void run() {
+                        if (GEOFENCE_DWELL_DELAY < 3600)
+                            GEOFENCE_DWELL_DELAY += 1;
+                        String seconds = Integer.toString(GEOFENCE_DWELL_DELAY);
+                        tv_geoFenceDwellDelay.setText(String.format("%sS", seconds));
+                        mHandler.postDelayed(this, 50);
+                    }
+                };
+            });
         }
 
         public void onAddAutoConnectTime(View v) {
@@ -127,6 +229,19 @@ public class SettingsActivity extends Activity
             if (GENERAL_SCAN_PERIOD > 1000) {
                 GENERAL_SCAN_PERIOD -= 1000;
                 updateScanTime();
+            }
+        }
+        public void onAddGeoDwellTime(View v) {
+            if (GEOFENCE_DWELL_DELAY < 3600) {
+                GEOFENCE_DWELL_DELAY += 1;
+                updateGeoFenceDwellTime();
+            }
+        }
+
+        public void onMinusGeoDwellTime(View v) {
+            if (GEOFENCE_DWELL_DELAY > 1) {
+                GEOFENCE_DWELL_DELAY -= 1;
+                updateGeoFenceDwellTime();
             }
         }
     }

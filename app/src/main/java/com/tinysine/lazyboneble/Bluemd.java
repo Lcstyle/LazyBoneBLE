@@ -143,6 +143,7 @@ public class Bluemd extends Activity {
 		else btn_status.setBackgroundResource(R.drawable.btn_normal);
 	}
 
+
 	public class BluetoothListenerReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -563,6 +564,8 @@ public class Bluemd extends Activity {
 		return true;
 	}
 
+
+
 	public static final int REQUEST_CONNECT_DEVICE = 1;
 	public static final String GEO_REQUEST_DISCONNECT_DEVICE = "REQUEST_DISCONNECT_DEVICE";
 	public static final String GEO_REQUEST_CONNECT_DEVICE = "REQUEST_CONNECT_DEVICE";
@@ -605,37 +608,40 @@ public class Bluemd extends Activity {
 					showText("Please connect the device first!");
 					break;
 				}
-			if (!isVerify) {
-				showText("Please verify the password first!");
-				break;
-			}
-			LayoutInflater layoutInflater = LayoutInflater.from(this);
-			final View myLoginView = layoutInflater.inflate( R.layout.ac_password, null );
-			AlertDialog.Builder dlgChgPsd = new AlertDialog.Builder(this);
-			AlertDialog dialog = dlgChgPsd
-					.setTitle("Change Password")
-					.setIcon(android.R.drawable.ic_dialog_info)
-					.setView(myLoginView)
-					.setCancelable(false)
-					.setPositiveButton("OK", (arg0, arg1) -> {
-						isVerify = true;
-						String strOrgPsd = ((EditText) (myLoginView.findViewById(R.id.orgpsd))).getText().toString();
-						String strNewPsd = ((EditText) (myLoginView.findViewById(R.id.newpsd))).getText().toString();
-						String strNewPsd2 = ((EditText) (myLoginView.findViewById(R.id.newpsd2))).getText().toString();
-						if (!strOrgPsd.equals(strInputPsd)) showText("The original password is not correct!");
-						else if (strNewPsd.equals("")) showText("The password cannot be empty!");
-						else if (strNewPsd.length() != 6) showText("The password must be 6 digits!");
-						else if (!strNewPsd.equals(strNewPsd2)) showText("The passwords are not same!");
-						else {
-								saveRegisteredDevicePassword(strNewPsd);
-								resetPassword("40" + int2Byte(strNewPsd));
-								showText("The password has been changed successfully!");
-							}
-						})
-					.setNegativeButton("Quit", (arg0, arg1) -> isVerify = true).create();
-			dialog.show();
-			return true;
-			}
+
+				if (!isVerify) {
+					showText("Please verify the password first!");
+					break;
+				}
+				LayoutInflater layoutInflater = LayoutInflater.from(this);
+				final View myLoginView = layoutInflater.inflate( R.layout.ac_password, null );
+				AlertDialog.Builder dlgChgPsd = new AlertDialog.Builder(this);
+				AlertDialog dialog = dlgChgPsd
+						.setTitle("Change Password")
+						.setIcon(android.R.drawable.ic_dialog_info)
+						.setView(myLoginView)
+						.setCancelable(false)
+						.setPositiveButton("OK", (arg0, arg1) -> {
+							isVerify = true;
+							String strOrgPsd = ((EditText) (myLoginView.findViewById(R.id.orgpsd))).getText().toString();
+							String strNewPsd = ((EditText) (myLoginView.findViewById(R.id.newpsd))).getText().toString();
+							String strNewPsd2 = ((EditText) (myLoginView.findViewById(R.id.newpsd2))).getText().toString();
+							if (!strOrgPsd.equals(strInputPsd)) showText("The original password is not correct!");
+							else if (strNewPsd.equals("")) showText("The password cannot be empty!");
+							else if (strNewPsd.length() != 6) showText("The password must be 6 digits!");
+							else if (!strNewPsd.equals(strNewPsd2)) showText("The passwords are not same!");
+							else {
+									saveRegisteredDevicePassword(strNewPsd);
+									resetPassword("40" + int2Byte(strNewPsd));
+									showText("The password has been changed successfully!");
+								}
+							})
+						.setNegativeButton("Quit", (arg0, arg1) -> isVerify = true).create();
+				dialog.show();
+				return true;
+				}
+			default:
+				return super.onOptionsItemSelected(item);
 		}
 		return false;
 	}
