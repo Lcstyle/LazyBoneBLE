@@ -7,7 +7,7 @@
          Google Maps Android API v2, but you must specify either coarse or fine
          location permissions for the "MyLocation" functionality.
     -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
@@ -18,11 +18,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
     <!--
  If your app targets Android 9 or lower, you can declare
          ACCESS_COARSE_LOCATION instead.
     -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <application
@@ -56,17 +59,19 @@
 
         <activity
             android:name=".geolocation.SelectMapsHomeLocation"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/title_activity_select_maps_home_location" />
         <activity
             android:name=".Bluemd"
             android:configChanges="keyboardHidden"
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:screenOrientation="fullSensor">
+            android:screenOrientation="fullSensor"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+
             </intent-filter>
         </activity>
         <activity
@@ -95,13 +100,8 @@
             android:name=".geolocation.GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
-         </receiver>
-<!--        <receiver-->
-<!--            android:name=".Bluemd$locationTransitionReceiver"-->
-<!--            android:enabled="true"-->
-<!--            android:exported="false">-->
-<!--        </receiver>-->
-
+        </receiver>
+        <service android:name=".geolocation.BackgroundGeoFenceLocationService" android:enabled="true" android:foregroundServiceType="location"/>
         <meta-data
             android:name="UMENG_APPKEY"
             android:value="5625e172e0f55a42350010da" />

@@ -15,6 +15,8 @@ import android.widget.Toast;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.tinysine.lazyboneble.Bluemd.PREFS_NAME;
+
 public class SettingsActivity extends Activity
     {
         private TextView tv_scanTime;
@@ -26,16 +28,17 @@ public class SettingsActivity extends Activity
         private static long GENERAL_SCAN_PERIOD;
         private static int GEOFENCE_DWELL_DELAY;
 
+
         private static String VANITY_NAME;
+        public static String VANITY_NAME_KEY = "vanity_name";
         public static String AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY = "bt_connect_trigger_dev";
         public static String AUTO_CONNECT_BT_TRIGGER_DEV_NAME;
         public static String AUTO_CONNECT_SCAN_PERIOD_KEY = "auto_scan_period";
         public static String GENERAL_SCAN_PERIOD_KEY = "general_scan_period";
         public static String GEOFENCE_DWELL_TIME_KEY = "geofence_dwell_delay";
-        public static String VANITY_NAME_KEY = "vanity_name";
 
+        private SharedPreferences.Editor sharedPrefsEditor;
         private SharedPreferences.Editor prefsEditor;
-
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -43,23 +46,28 @@ public class SettingsActivity extends Activity
                 super.onCreate(savedInstanceState);
                 setContentView(R.layout.general_settings);
                 init();
+                // DEFAULT PREFS
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+                sharedPrefsEditor = sharedPreferences.edit();
+                // USER PREFS
+                SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
+                prefsEditor = preferences.edit();
 
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                prefsEditor = prefs.edit();
-
-                AUTO_CONNECT_SCAN_PERIOD = prefs.getLong(AUTO_CONNECT_SCAN_PERIOD_KEY, 15000);
+                // DEFAULT PREFS
+                AUTO_CONNECT_SCAN_PERIOD = sharedPreferences.getLong(AUTO_CONNECT_SCAN_PERIOD_KEY, 15000);
                 tv_autoConnectTime.setText(String.format("%sS", TimeUnit.MILLISECONDS.toSeconds(AUTO_CONNECT_SCAN_PERIOD)));
 
-                GENERAL_SCAN_PERIOD = prefs.getLong(GENERAL_SCAN_PERIOD_KEY, 30000);
+                GENERAL_SCAN_PERIOD = sharedPreferences.getLong(GENERAL_SCAN_PERIOD_KEY, 30000);
                 tv_scanTime.setText(String.format("%sS", TimeUnit.MILLISECONDS.toSeconds(GENERAL_SCAN_PERIOD)));
 
-                GEOFENCE_DWELL_DELAY = prefs.getInt(GEOFENCE_DWELL_TIME_KEY, 60);
+                // USER PREFS
+                GEOFENCE_DWELL_DELAY = preferences.getInt(GEOFENCE_DWELL_TIME_KEY, 60);
                 tv_geoFenceDwellDelay.setText(String.format("%sS", GEOFENCE_DWELL_DELAY));
 
-                AUTO_CONNECT_BT_TRIGGER_DEV_NAME = prefs.getString(AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY, "");
+                AUTO_CONNECT_BT_TRIGGER_DEV_NAME = preferences.getString(AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY, "");
                 et_trigger_dev_name.setText(AUTO_CONNECT_BT_TRIGGER_DEV_NAME);
 
-                VANITY_NAME = prefs.getString(VANITY_NAME_KEY, "");
+                VANITY_NAME = preferences.getString(VANITY_NAME_KEY, "");
                 et_vanity_name.setText(VANITY_NAME);
             }
 
@@ -69,6 +77,7 @@ public class SettingsActivity extends Activity
                 super.onDestroy();
                 update_vanity_name();
                 update_trigger_dev_name();
+                sharedPrefsEditor.apply();
                 prefsEditor.apply();
                 Toast.makeText(this, "Preferences Updated", Toast.LENGTH_SHORT).show();
             }
@@ -101,7 +110,7 @@ public class SettingsActivity extends Activity
         {
             String seconds = Long.toString(TimeUnit.MILLISECONDS.toSeconds(GENERAL_SCAN_PERIOD));
             tv_scanTime.setText(String.format("%sS", seconds));
-            prefsEditor.putLong(GENERAL_SCAN_PERIOD_KEY, GENERAL_SCAN_PERIOD);
+            sharedPrefsEditor.putLong(GENERAL_SCAN_PERIOD_KEY, GENERAL_SCAN_PERIOD);
             Toast.makeText(this, "Scan Time Settings Updated", Toast.LENGTH_SHORT).show();
         }
 
@@ -109,7 +118,7 @@ public class SettingsActivity extends Activity
         {
             String seconds = Long.toString(TimeUnit.MILLISECONDS.toSeconds(AUTO_CONNECT_SCAN_PERIOD));
             tv_autoConnectTime.setText(String.format("%sS", seconds));
-            prefsEditor.putLong(AUTO_CONNECT_SCAN_PERIOD_KEY, AUTO_CONNECT_SCAN_PERIOD);
+            sharedPrefsEditor.putLong(AUTO_CONNECT_SCAN_PERIOD_KEY, AUTO_CONNECT_SCAN_PERIOD);
             Toast.makeText(this, "AutoConnect Time Settings Updated", Toast.LENGTH_SHORT).show();
         }
 

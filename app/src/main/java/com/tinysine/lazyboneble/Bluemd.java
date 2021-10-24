@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
+import android.app.Application;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -17,6 +18,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -42,6 +44,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.tinysine.lazyboneble.geolocation.BackgroundGeoFenceLocationService;
 import com.tinysine.lazyboneble.geolocation.GeofenceNotificationHelper;
 import com.tinysine.lazyboneble.geolocation.SelectMapsHomeLocation;
 import com.tinysine.lazyboneble.service.BluetoothLeService;
@@ -51,39 +54,58 @@ import com.tinysine.lazyboneble.util.Util;
 import com.tinysine.lazyboneble.util.SharedPreferencesUtil;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import static com.tinysine.lazyboneble.DeviceListActivity.reg_dev_name;
 import static com.tinysine.lazyboneble.DeviceListActivity.reg_dev_password;
+import static com.tinysine.lazyboneble.DeviceListActivity.registered_device_name_key;
 import static com.tinysine.lazyboneble.SettingsActivity.VANITY_NAME_KEY;
 
 @SuppressLint("InflateParams")
 public class Bluemd extends Activity {
+
 
 	private ImageView iv_connect_status;
 	private Button btn_connect_name;
 	private Button btn_status;
 
 	public boolean isOn = false;
-	private boolean isModeConnectSuccess = false;
-	private ModeThread modeThread = null;
 
-	private static String VANITY_NAME;
-	private static final String ADDRESS = "address";	//Local cache address identification
-	private static final String ADDRESS_NAME = "addressName"; // Local cache address identification
+	private boolean ok = false;
+	private boolean isModeConnectSuccess = false;
+
+	public static final String GEO_REQUEST_DISCONNECT_DEVICE = "REQUEST_DISCONNECT_DEVICE";
+	public static final String GEO_REQUEST_CONNECT_DEVICE = "REQUEST_CONNECT_DEVICE";
+
+	public static final int REQUEST_CONNECT_DEVICE = 1;
+	public static final int REQUEST_ENABLE_BT = 2;
+
+	private int status = Util.BT_DATA_PASSWORD;
+
 	private static final int BAIDU_READ_PHONE_STATE = 100;//Location permission request
 	private static final int PRIVATE_CODE = 1315;//Turn on GPS permissions
 
+	private static String VANITY_NAME;
+
+	private static final String ADDRESS = "address";	//Local cache address identification
+	private static final String ADDRESS_NAME = "addressName"; // Local cache address identification
+
 	private String address; // device address
 	private String mConnectedDeviceName; // device name
+
+	private ModeThread modeThread = null;
+
 	private BluetoothLeService mBluetoothLeService;
+	private BroadcastReceiver locationTransitionReceiver;
+	private BluetoothListenerReceiver receiver; //Bluetooth open and close monitoring service
+	private SelectMapsHomeLocation dla_instance;
+
+	private Intent bg_loc_service_intent;
 
 	static final String[] LOCATION_GPS = new String[] {
 			Manifest.permission.ACCESS_COARSE_LOCATION,
 			Manifest.permission.ACCESS_FINE_LOCATION,
 			Manifest.permission.READ_PHONE_STATE };
 
-	private boolean ok = false;
-	private BluetoothListenerReceiver receiver; //Bluetooth open and close monitoring service
-	private BroadcastReceiver locationTransitionReceiver;
 
 	private final ServiceConnection mServiceConnection = new ServiceConnection() {
 		@Override
@@ -139,7 +161,11 @@ public class Bluemd extends Activity {
 	 * Set button state
 	 */
 	private void setButtonStatus() {
-		if (isOn) btn_status.setBackgroundResource(R.drawable.btn_selected);
+		if (isOn)
+			{
+				btn_status.setBackgroundResource(R.drawable.btn_selected);
+				dla_instance.setHomeGeoFence(this);
+			}
 		else btn_status.setBackgroundResource(R.drawable.btn_normal);
 	}
 
@@ -170,6 +196,7 @@ public class Bluemd extends Activity {
 		}
 	}
 
+
 	public class locationTransitionReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent)
@@ -177,26 +204,28 @@ public class Bluemd extends Activity {
 				final String action = intent.getAction();
 				if (Bluemd.GEO_REQUEST_DISCONNECT_DEVICE.equals(action))
 					{
+						finishAndRemoveTask();
+
 						if (isOn)
 							{
 								liveData("6f");
 								Toast.makeText(context, VANITY_NAME + " ShutDown", Toast.LENGTH_SHORT).show();
 								Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Shutting Down");
+								finishAndRemoveTask();
 							}
 					}
 				else if (Bluemd.GEO_REQUEST_CONNECT_DEVICE.equals(action))
 					{
 						if (!(isOn))
 							{
-								GeofenceNotificationHelper notificationHelper = new GeofenceNotificationHelper(context);
 								String msg = VANITY_NAME + " AutoStart";
+								GeofenceNotificationHelper notificationHelper = new GeofenceNotificationHelper(context);
 								notificationHelper.sendHighPriorityNotification("LazyBone GeoFence", msg, Bluemd.class);
 								liveData("65");
-//								Toast.makeText(context, "SilverSparrow Cam AutoStart", Toast.LENGTH_SHORT).show();
+								Toast.makeText(context, VANITY_NAME + " AutoStart", Toast.LENGTH_SHORT).show();
 								Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Starting");
 							}
 					}
-
 				}
 		}
 
@@ -222,7 +251,7 @@ public class Bluemd extends Activity {
 							isConnected = true;
 							if (progressDialog != null)
 								progressDialog.dismiss();
-							iv_connect_status.setImageResource(R.drawable.im_conneted);
+							iv_connect_status.setImageResource(R.drawable.im_connected);
 							setConnectName();
 							askMode();
 						} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action))
@@ -337,10 +366,10 @@ public class Bluemd extends Activity {
 		locationTransitionReceiver = new locationTransitionReceiver();
 		registerReceiver(locationTransitionReceiver, makeLocationTransitionFilter() );
 
-
 		iv_connect_status = findViewById(R.id.iv_connect_status);
 		btn_connect_name = findViewById(R.id.btn_connect_name);
 		btn_status = findViewById(R.id.btn_status);
+		VANITY_NAME = preferences.getString(VANITY_NAME_KEY, "");
 
 		// logo Control
 		ImageView iv_logo1 = findViewById(R.id.logo);
@@ -367,7 +396,6 @@ public class Bluemd extends Activity {
 				return;
 			}
 
-		VANITY_NAME = preferences.getString(VANITY_NAME_KEY, "");
 
 		btn_status.setOnClickListener(v -> {
 			resetAutoDisconnect();
@@ -407,8 +435,35 @@ public class Bluemd extends Activity {
 		// AUTO START CONNECT DIALOG - For Registered Device Automatic Connection
 		Intent serverIntent = new Intent(this, DeviceListActivity.class);
 		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
-
 	}
+
+	private void startLocationUpdates()
+		{
+			int backgroundLocationPermissionState = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+			if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)
+				enableUserLocation();
+
+			if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+				enableUserLocation();
+
+
+			Context appContext = getApplicationContext();
+			bg_loc_service_intent = new Intent(appContext, BackgroundGeoFenceLocationService.class);
+			appContext.startForegroundService(bg_loc_service_intent);
+			Toast.makeText(appContext, "Located Updates Enabled...", Toast.LENGTH_SHORT).show();
+		}
+
+	private void enableUserLocation()
+		{
+			int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
+			int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 10002;
+
+			if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_ACCESS_REQUEST_CODE);
+
+			if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)
+				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
+		}
 
 	private IntentFilter makeFilter() {
 		IntentFilter filter = new IntentFilter();
@@ -468,8 +523,6 @@ public class Bluemd extends Activity {
 		return intentFilter;
 	}
 
-	private int status = Util.BT_DATA_PASSWORD;
-
 	private void sendStatus() {
 		status = Util.BT_DATA_STATUS;
 		if (firstTimeThread != null)
@@ -512,7 +565,7 @@ public class Bluemd extends Activity {
 
 	private BluetoothAdapter mBluetoothAdapter = null;
 	private boolean mEnablingBT = false;
-	private static final int REQUEST_ENABLE_BT = 2;
+
 
 	@Override
 	public synchronized void onResume() {
@@ -564,11 +617,6 @@ public class Bluemd extends Activity {
 		return true;
 	}
 
-
-
-	public static final int REQUEST_CONNECT_DEVICE = 1;
-	public static final String GEO_REQUEST_DISCONNECT_DEVICE = "REQUEST_DISCONNECT_DEVICE";
-	public static final String GEO_REQUEST_CONNECT_DEVICE = "REQUEST_CONNECT_DEVICE";
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -657,19 +705,17 @@ public class Bluemd extends Activity {
 
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		switch (requestCode) {
-		case REQUEST_CONNECT_DEVICE:
-			if (resultCode == RESULT_OK) {
-				mConnectedDeviceAddress = data.getStringExtra(DeviceListActivity.DEVICE_ADDRESS_KEY);
-				live(mConnectedDeviceAddress);
-
-				SelectMapsHomeLocation instance = new SelectMapsHomeLocation();
-				instance.setHomeGeoFence(this);
-			}
-			break;
-		case REQUEST_ENABLE_BT:
-			if ((mBluetoothAdapter != null) && (!mBluetoothAdapter.isEnabled())) {
-				finishDialogNoBluetooth();
-			}
+			case REQUEST_CONNECT_DEVICE:
+				if (resultCode == RESULT_OK) {
+					mConnectedDeviceAddress = data.getStringExtra(DeviceListActivity.DEVICE_ADDRESS_KEY);
+					live(mConnectedDeviceAddress);
+					startLocationUpdates();
+					}
+				break;
+			case REQUEST_ENABLE_BT:
+				if ((mBluetoothAdapter != null) && (!mBluetoothAdapter.isEnabled())) {
+					finishDialogNoBluetooth();
+				}
 		}
 	}
 
@@ -698,6 +744,7 @@ public class Bluemd extends Activity {
 		mBluetoothLeService = null;
 		unregisterReceiver(receiver);
 		unregisterReceiver(locationTransitionReceiver);
+		stopService(bg_loc_service_intent);
 	}
 
 	@Override
@@ -890,7 +937,7 @@ public class Bluemd extends Activity {
 					if (!newName.equals("")) {
 						Editor editor = preferences.edit();
 						editor.putString(mConnectedDeviceAddress, newName);
-						editor.putString(DeviceListActivity.registered_device_name_key, newName);
+						editor.putString(registered_device_name_key, newName);
 						editor.putString(DeviceListActivity.registered_device_addr_key, mConnectedDeviceAddress);
 						editor.apply();
 						setConnectName();

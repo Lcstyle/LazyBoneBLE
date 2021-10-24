@@ -87,4 +87,6 @@
     <string name="bt_triggering_dev_name">BT Triggering Dev Name</string>
     <string name="geofence_dwell_delay">GeoFence Dwell Delay</string>
     <string name="auto_connect_period">Auto Connect Period</string>
+    <string name="bg_loc_notification_title">Background Location Tracking</string>
+    <string name="bg_loc_notification_message">GeoFence Tracking for </string>
 </resources>

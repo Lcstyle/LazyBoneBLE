@@ -57,6 +57,7 @@ public class GeofenceNotificationHelper extends ContextWrapper {
                 .setStyle(new NotificationCompat.BigTextStyle().setSummaryText("summary").setBigContentTitle(title).bigText(body))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
+                .setTimeoutAfter(15000)
                 .build();
 
         NotificationManagerCompat.from(this).notify(new Random().nextInt(), notification);

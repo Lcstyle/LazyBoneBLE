@@ -1,6 +1,7 @@
 package com.tinysine.lazyboneble.geolocation;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
@@ -8,9 +9,11 @@ import androidx.fragment.app.FragmentActivity;
 import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
+
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -36,60 +39,54 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.tinysine.lazyboneble.Bluemd.PREFS_NAME;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class SelectMapsHomeLocation extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener
     {
-
-        private FusedLocationProviderClient fusedLocationClient;
         private static final int DEFAULT_ZOOM = 15;
-        public static final String HOME_LATLNG_KEY = "home_location";
-
-        private GoogleMap mMap;
-        private ActivitySelectMapsHomeLocationBinding binding;
-        private GeofencingClient mGeofencingClient;
-        private GeofenceHelper geofenceHelper;
 
         private final int FINE_LOCATION_ACCESS_REQUEST_CODE = 10001;
         private final int BACKGROUND_LOCATION_ACCESS_REQUEST_CODE = 10002;
-        private float GEOFENCE_RADIUS = 200;
-        private String GEOFENCE_ID = "SOME_GEOFENCE_ID";
+
+        public static final String HOME_LATLNG_KEY = "home_location";
         private static final String TAG = "LazyBoneMapsActivity";
+
+        private final float GEOFENCE_RADIUS = 200;
+
+
+        public SharedPreferences preferences;
+
+        public GeofenceHelper geofenceHelper;
 
         public LatLng mHomeLatLng;
         public String mHomeLatLngStr;
 
-        public SharedPreferences preferences;
-
+        private GoogleMap mMap;
+        private GeofencingClient mGeofencingClient;
+        private FusedLocationProviderClient fusedLocationClient;
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
             {
                 super.onCreate(savedInstanceState);
-                binding = ActivitySelectMapsHomeLocationBinding.inflate(getLayoutInflater());
+                com.tinysine.lazyboneble.databinding.ActivitySelectMapsHomeLocationBinding binding = ActivitySelectMapsHomeLocationBinding.inflate(getLayoutInflater());
                 setContentView(binding.getRoot());
-                preferences = getSharedPreferences(PREFS_NAME, 0);
-                mHomeLatLngStr = preferences.getString(SelectMapsHomeLocation.HOME_LATLNG_KEY, "");
-                fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-                mGeofencingClient = LocationServices.getGeofencingClient(this);
-                geofenceHelper = new GeofenceHelper(this);
-                setHomeGeoFence(this);
-                // Obtain the SupportMapFragment and get notified when the map is ready to be used.
                 SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
                 if (mapFragment != null)
                     mapFragment.getMapAsync(this);
+                // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+                setHomeGeoFence(this);
             }
 
         public void setHomeGeoFence(Activity caller)
             {
-                if (!(caller.equals(SelectMapsHomeLocation.this)))
-                    {
-                        preferences = caller.getSharedPreferences(PREFS_NAME, 0);
-                        mHomeLatLngStr = preferences.getString(SelectMapsHomeLocation.HOME_LATLNG_KEY, "");
-                        fusedLocationClient = LocationServices.getFusedLocationProviderClient(caller);
-                        mGeofencingClient = LocationServices.getGeofencingClient(caller);
-                        geofenceHelper = new GeofenceHelper(caller);
-                    }
+                preferences = caller.getSharedPreferences(PREFS_NAME, 0);
+                mHomeLatLngStr = preferences.getString(HOME_LATLNG_KEY, "");
+                fusedLocationClient = LocationServices.getFusedLocationProviderClient(caller);
+                mGeofencingClient = LocationServices.getGeofencingClient(caller);
+                geofenceHelper = new GeofenceHelper(caller);
 
-                if (!(mHomeLatLngStr.equals("")) || mHomeLatLng == null)
+
+                if (!(mHomeLatLngStr.equals("")) && mHomeLatLng == null)
                     {
                         setHomeLatLng();
                         String returnMsg = addGeofence(caller, mHomeLatLng, GEOFENCE_RADIUS);
@@ -107,6 +104,8 @@ public class SelectMapsHomeLocation extends FragmentActivity implements OnMapRea
                 mHomeLatLng = new LatLng(lat, lng);
             }
 
+
+
         /**
          * Manipulates the map once available.
          * This callback is triggered when the map is ready to be used.
@@ -120,7 +119,6 @@ public class SelectMapsHomeLocation extends FragmentActivity implements OnMapRea
         public void onMapReady(@NonNull GoogleMap googleMap)
             {
                 mMap = googleMap;
-
                 enableUserLocation();
 
                 if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -203,14 +201,10 @@ public class SelectMapsHomeLocation extends FragmentActivity implements OnMapRea
         @Override
         public void onMapLongClick(@NonNull LatLng latLng)
             {
-                if (Build.VERSION.SDK_INT >= 29)
-                    {
-                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED)
-                            handleMapLongClick(latLng);
-                        else
-                            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
-                    } else
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED)
                     handleMapLongClick(latLng);
+                else
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
             }
 
         private void handleMapLongClick(LatLng latLng)
@@ -227,6 +221,7 @@ public class SelectMapsHomeLocation extends FragmentActivity implements OnMapRea
 
         public String addGeofence(Activity caller, LatLng latLng, float radius)
             {
+                String GEOFENCE_ID = "HOME_GEOFENCE";
                 Geofence geofence = geofenceHelper.getGeofence(GEOFENCE_ID, latLng, radius, Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_DWELL | Geofence.GEOFENCE_TRANSITION_EXIT);
                 GeofencingRequest geofencingRequest = geofenceHelper.getGeofencingRequest(geofence);
                 PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
@@ -251,6 +246,7 @@ public class SelectMapsHomeLocation extends FragmentActivity implements OnMapRea
                             Log.d(TAG, "onFailure: " + errorMessage);
                             returnMsg.set(errorMessage);
                         });
+
                 return returnMsg.get();
             }
 
@@ -260,6 +256,8 @@ public class SelectMapsHomeLocation extends FragmentActivity implements OnMapRea
         }
 
         private void addCircle(LatLng latLng, float radius) {
+
+
             CircleOptions circleOptions = new CircleOptions();
             circleOptions.center(latLng);
             circleOptions.radius(radius);

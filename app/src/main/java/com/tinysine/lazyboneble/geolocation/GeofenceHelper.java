@@ -6,13 +6,13 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.preference.PreferenceManager;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofenceStatusCodes;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.maps.model.LatLng;
+import com.tinysine.lazyboneble.Bluemd;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,7 +29,7 @@ public class GeofenceHelper extends ContextWrapper {
 
     public GeofenceHelper(Context base) {
         super(base);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(base);
+        SharedPreferences prefs = getSharedPreferences(Bluemd.PREFS_NAME, 0);
         dwell_time_delay = prefs.getInt(GEOFENCE_DWELL_TIME_KEY, 60);
     }
 
@@ -56,7 +56,7 @@ public class GeofenceHelper extends ContextWrapper {
             return pendingIntent;
         }
         Intent intent = new Intent(this, GeofenceBroadcastReceiver.class);
-        pendingIntent = PendingIntent.getBroadcast(this, 2607, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        pendingIntent = PendingIntent.getBroadcast(this, 2607, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         return pendingIntent;
     }

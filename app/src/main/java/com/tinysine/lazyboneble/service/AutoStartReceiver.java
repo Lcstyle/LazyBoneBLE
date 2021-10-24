@@ -75,6 +75,7 @@ public class AutoStartReceiver extends BroadcastReceiver
                     .setContentText("AutoLaunch")
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setCategory(NotificationCompat.CATEGORY_CALL)
+                    .setTimeoutAfter(60000)
                     .setFullScreenIntent(pendingIntent, true)
                     .setAutoCancel(true);
 
