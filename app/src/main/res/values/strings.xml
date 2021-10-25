@@ -89,4 +89,9 @@
     <string name="auto_connect_period">Auto Connect Period</string>
     <string name="bg_loc_notification_title">Background Location Tracking</string>
     <string name="bg_loc_notification_message">GeoFence Tracking for </string>
+    <string name="wifi_triggering_dev_name">WiFi Triggering SSID</string>
+    <string name="enable_geofence_monitoring">Enable GeoFence Monitoring</string>
+    <string name="enable_wifi_monitoring">Enable WiFi Monitoring</string>
+    <string name="enable_bt_autostart">Enable BT AutoStart</string>
+    <string name="geofence_radius">GeoFence Radius (meters)</string>
 </resources>

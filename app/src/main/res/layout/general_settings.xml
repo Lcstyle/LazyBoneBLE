@@ -1,4 +1,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@drawable/im_bg" >
@@ -48,14 +50,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15sp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal" >
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
                     android:gravity="left"
                     android:text="@string/vanity_name"
+                    android:textColor="@android:color/white"
                     android:textSize="16sp" />
 
 
@@ -74,16 +76,77 @@
                     android:text=""
                     android:textColor="@color/black"
                     android:textSize="16sp" />
+            </LinearLayout>
 
-                <!--                    <TextView-->
-                    <!--                        android:id="@+id/vanity_name"-->
-                    <!--                        android:layout_width="90sp"-->
-                    <!--                        android:layout_height="fill_parent"-->
-                    <!--                        android:gravity="center"-->
-                    <!--                        android:text="test"-->
-                    <!--                        android:textColor="#99FF66"-->
-                    <!--                        android:textSize="16sp" />-->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/linearLayoutBT_AS"
+                android:layout_width="fill_parent"
+                android:layout_height="35dp"
+                android:layout_marginTop="15sp"
+                android:gravity="center_vertical">
 
+                <TextView
+                    android:id="@+id/bt_as_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="100dp"
+                    android:gravity="start"
+                    android:text="@string/enable_bt_autostart"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toStartOf="@+id/cb_enable_bt_autostart"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/linearLayoutBT_AS" />
+
+                <CheckBox
+                    android:id="@+id/cb_enable_bt_autostart"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginEnd="1dp"
+                    android:layout_marginBottom="4dp"
+                    android:checked="false"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/bt_as_textView" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_bt_trigger_dev_name"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15sp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:text="@string/bt_triggering_dev_name"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    tools:visibility="visible" />
+
+
+                <EditText
+                    android:id="@+id/et_bt_trigger_dev_name"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginLeft="10sp"
+                    android:layout_marginEnd="1sp"
+                    android:background="@color/white"
+                    android:gravity="left"
+                    android:maxLength="20"
+                    android:singleLine="true"
+                    android:text=""
+                    android:textColor="@color/black"
+                    android:textSize="16sp" />
             </LinearLayout>
 
             <LinearLayout
@@ -91,24 +154,116 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15sp"
                 android:gravity="center_vertical"
-                android:orientation="horizontal" >
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:text="@string/enable_geofence_monitoring"
                     android:textColor="@android:color/white"
+                    android:textSize="16sp" />
+
+                <CheckBox
+                    android:id="@+id/cb_enable_geofence_monitoring"
+                    android:layout_width="36dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="end|center_horizontal"
+                    android:layout_marginStart="59sp"
+                    android:layout_marginEnd="1sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_geofence_radius"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15sp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:text="@string/geofence_radius"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp" />
+
+                <SeekBar
+                    android:id="@+id/sb_geofence_radius"
+                    android:layout_width="match_parent"
+                    android:layout_height="32dp"
+                    android:layout_gravity="end|center_horizontal"
+                    android:layout_marginStart="30sp"
+                    android:layout_marginEnd="1sp"
+                    android:max="1600"
+                    android:min="100"
+                    android:progress="200" />
+
+            </LinearLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15sp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="1dp"
+                    android:gravity="start"
+                    android:text="@string/enable_wifi_monitoring"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    app:layout_constraintEnd_toStartOf="@+id/cb_enable_wifi_monitoring"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/cb_enable_wifi_monitoring" />
+
+                <CheckBox
+                    android:id="@+id/cb_enable_wifi_monitoring"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_marginLeft="99dp"
+                    android:layout_marginEnd="1dp"
+                    android:layout_marginRight="1dp"
+                    android:layout_marginBottom="16dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/textView" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_wifi_trigger_dev_name"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15sp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:gravity="left"
-                    android:text="@string/bt_triggering_dev_name"
+                    android:text="@string/wifi_triggering_dev_name"
+                    android:textColor="@android:color/white"
                     android:textSize="16sp" />
 
 
                 <EditText
-                    android:id="@+id/et_trigger_dev_name"
+                    android:id="@+id/et_wifi_trigger_dev_name"
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
                     android:layout_gravity="center_horizontal"
-                    android:layout_marginEnd="1sp"
                     android:layout_marginLeft="10sp"
+                    android:layout_marginEnd="1sp"
 
                     android:background="@color/white"
                     android:gravity="left"
@@ -128,6 +283,7 @@
                 <!--                        android:textSize="16sp" />-->
 
             </LinearLayout>
+
 
             <RelativeLayout
                 android:layout_width="fill_parent"
@@ -180,11 +336,11 @@
             </RelativeLayout>
 
 
-<!--            <View-->
-<!--                android:layout_width="fill_parent"-->
-<!--                android:layout_height="0.1sp"-->
-<!--                android:alpha="0.5"-->
-<!--                android:background="@color/gray_text" />-->
+            <!--            <View-->
+            <!--                android:layout_width="fill_parent"-->
+            <!--                android:layout_height="0.1sp"-->
+            <!--                android:alpha="0.5"-->
+            <!--                android:background="@color/gray_text" />-->
 
             <RelativeLayout
                 android:layout_width="fill_parent"
@@ -260,8 +416,8 @@
                         android:layout_width="30sp"
                         android:layout_height="fill_parent"
                         android:background="@color/transparent"
-                        android:onClick="onMinusGeoDwellTime"
                         android:longClickable="true"
+                        android:onClick="onMinusGeoDwellTime"
                         android:text="-"
                         android:textColor="#99FF66"
                         android:textSize="25sp"
@@ -281,8 +437,8 @@
                         android:layout_width="30sp"
                         android:layout_height="fill_parent"
                         android:background="@color/transparent"
-                        android:onClick="onAddGeoDwellTime"
                         android:longClickable="true"
+                        android:onClick="onAddGeoDwellTime"
                         android:text="+"
                         android:textColor="#99FF66"
                         android:textSize="25sp"
