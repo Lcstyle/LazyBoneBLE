@@ -22,22 +22,15 @@ import static com.tinysine.lazyboneble.SettingsActivity.AUTO_CONNECT_BT_TRIGGER_
 
 public class BT_AutoStartReceiver extends BroadcastReceiver
     {
+        private static final String TAG = "BT_AutoStartReceiver";
 
         private void createNotificationChannel(Context context) {
-            // Create the NotificationChannel, but only on API 26+ because
-            // the NotificationChannel class is new and not in the support library
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                CharSequence name = getString("");
-//                String description = getString(R.string.channel_description);
-                int importance = NotificationManager.IMPORTANCE_HIGH;
-                NotificationChannel channel = new NotificationChannel("LazyBoneBLE-AutoStart", "LazyBoneBLE AutoStart", importance);
-                channel.setDescription("LazyBoneBLE Registered Notification Channel");
-                // Register the channel with the system; you can't change the importance
-                // or other notification behaviors after this
-                NotificationManager notificationManager = getSystemService(context, NotificationManager.class);
-                if (notificationManager != null)
-                        notificationManager.createNotificationChannel(channel);
-            }
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel("LazyBoneBLE-AutoStart", "LazyBoneBLE AutoStart", importance);
+            channel.setDescription("LazyBoneBLE Registered Notification Channel");
+            NotificationManager notificationManager = getSystemService(context, NotificationManager.class);
+            if (notificationManager != null)
+                    notificationManager.createNotificationChannel(channel);
         }
 
         public void onReceive(Context context, Intent intent)
@@ -51,13 +44,13 @@ public class BT_AutoStartReceiver extends BroadcastReceiver
                 switch (action)
                     {
                         case BluetoothDevice.ACTION_ACL_CONNECTED:
-                            Log.v("BTRECEIVER", "Device Connected: " + device_name);
+                            Log.v(TAG, "Device Connected: " + device_name);
                             if (device_name.contains(AUTO_CONNECT_BT_TRIGGER_DEV_NAME))
                                     ActivateSwitch(context);
                             break;
 
                         case BluetoothDevice.ACTION_ACL_DISCONNECTED:
-                            Log.v("BTRECEIVER", "Device Disconnected: " + device_name);
+                            Log.v(TAG, "Device Disconnected: " + device_name);
                             break;
                     }
             }
@@ -68,7 +61,6 @@ public class BT_AutoStartReceiver extends BroadcastReceiver
             Intent launchIntent = pm.getLaunchIntentForPackage("com.tinysine.lazyboneble");
             launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-            // .setContentIntent(pendingIntent)
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "LazyBoneBLE-AutoStart")
                     .setSmallIcon(R.drawable.ic_launcher)
                     .setContentTitle("LazyBoneBLE")

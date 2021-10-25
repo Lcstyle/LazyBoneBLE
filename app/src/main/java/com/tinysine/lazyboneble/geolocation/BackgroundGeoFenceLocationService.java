@@ -59,7 +59,7 @@ public class BackgroundGeoFenceLocationService extends Service
         public String mHomeLatLngStr;
         private GeofencingClient mGeofencingClient;
         public GeofenceHelper geofenceHelper;
-        private final float GEOFENCE_RADIUS = 200;
+        public static String GEOFENCE_RADIUS_KEY = "geofence_radius";
         private Handler mServiceHandler;
         HandlerThread handlerThread;
         public static String VANITY_NAME_KEY = "vanity_name";
@@ -154,6 +154,7 @@ public class BackgroundGeoFenceLocationService extends Service
                 handlerThread = new HandlerThread(TAG);
                 handlerThread.start();
                 mServiceHandler = new Handler(handlerThread.getLooper());
+                float GEOFENCE_RADIUS = preferences.getFloat(GEOFENCE_RADIUS_KEY, 200);
 
                 locationCallback = new LocationCallback()
                     {
@@ -292,7 +293,6 @@ public class BackgroundGeoFenceLocationService extends Service
                     }
 
                 Log.d(TAG, "Location update started ..............: ");
-
 
                 this.createLocationRequest();
                 this.requestLocationUpdates();

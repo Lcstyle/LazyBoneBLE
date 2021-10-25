@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
-import android.app.Application;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -20,6 +19,10 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkRequest;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -53,11 +56,14 @@ import com.tinysine.lazyboneble.util.LogUtil;
 import com.tinysine.lazyboneble.util.Util;
 import com.tinysine.lazyboneble.util.SharedPreferencesUtil;
 
+import java.util.Locale;
+
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import static com.tinysine.lazyboneble.DeviceListActivity.reg_dev_name;
 import static com.tinysine.lazyboneble.DeviceListActivity.reg_dev_password;
 import static com.tinysine.lazyboneble.DeviceListActivity.registered_device_name_key;
+import static com.tinysine.lazyboneble.SettingsActivity.AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME_KEY;
 import static com.tinysine.lazyboneble.SettingsActivity.ENABLE_BT_AUTOSTART_KEY;
 import static com.tinysine.lazyboneble.SettingsActivity.ENABLE_GEOFENCE_MONITORING_KEY;
 import static com.tinysine.lazyboneble.SettingsActivity.ENABLE_WIFI_MONITORING_KEY;
@@ -66,17 +72,26 @@ import static com.tinysine.lazyboneble.SettingsActivity.VANITY_NAME_KEY;
 @SuppressLint("InflateParams")
 public class Bluemd extends Activity {
 
-
+	private Context appContext;
 	private ImageView iv_connect_status;
 	private Button btn_connect_name;
 	private Button btn_status;
 
+	private ProgressDialog progressDialog;
+	private FirstTimeThread firstTimeThread;
+
 	public boolean isOn = false;
 
-	private boolean ok = false;
-	private boolean isModeConnectSuccess = false;
+	private Boolean bootUp;
 	private Boolean GEOFENCE_MONITORING_ENABLED;
+	private boolean home_wiFi_connected;
+	private boolean isConnected = false;
+	private boolean isModeConnectSuccess = false;
+	private boolean isNeedPassword = false;
+	private boolean isVerify = false;
+	private boolean ok = false;
 
+	public static final String PREFS_NAME = "MyPrefsFile";
 	public static final String GEO_REQUEST_DISCONNECT_DEVICE = "REQUEST_DISCONNECT_DEVICE";
 	public static final String GEO_REQUEST_CONNECT_DEVICE = "REQUEST_CONNECT_DEVICE";
 
@@ -89,6 +104,7 @@ public class Bluemd extends Activity {
 	private static final int PRIVATE_CODE = 1315;//Turn on GPS permissions
 
 	private static String VANITY_NAME;
+	private static String AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME;
 
 	private static final String ADDRESS = "address";	//Local cache address identification
 	private static final String ADDRESS_NAME = "addressName"; // Local cache address identification
@@ -99,9 +115,13 @@ public class Bluemd extends Activity {
 	private ModeThread modeThread = null;
 
 	private BluetoothLeService mBluetoothLeService;
+
 	private BroadcastReceiver locationTransitionReceiver;
+	private BroadcastReceiver wiFiTransitionReceiver;
 	private BluetoothListenerReceiver receiver; //Bluetooth open and close monitoring service
-	private SelectMapsHomeLocation dla_instance;
+
+	public SharedPreferences preferences;
+	private SharedPreferences defaultPreferences;
 
 	private Intent bg_loc_service_intent;
 
@@ -110,11 +130,11 @@ public class Bluemd extends Activity {
 			Manifest.permission.ACCESS_FINE_LOCATION,
 			Manifest.permission.READ_PHONE_STATE };
 
-
-	private final ServiceConnection mServiceConnection = new ServiceConnection() {
+	private final ServiceConnection mBLE_serviceConnection = new ServiceConnection() {
 		@Override
 		public void onServiceConnected(ComponentName componentName, IBinder service) {
 			mBluetoothLeService = ((LocalBinder) service).getService();
+
 			if (!mBluetoothLeService.initialize()) {
 				LogUtil.e("Unable to initialize Bluetooth");
 				finish();
@@ -130,8 +150,6 @@ public class Bluemd extends Activity {
 		}
 	};
 
-	private boolean isNeedPassword = false;
-	private boolean isVerify = false;
 
 	/**
 	 * Restore default settings
@@ -171,7 +189,6 @@ public class Bluemd extends Activity {
 			btn_status.setBackgroundResource(R.drawable.btn_normal);
 	}
 
-
 	public class BluetoothListenerReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -198,7 +215,6 @@ public class Bluemd extends Activity {
 		}
 	}
 
-
 	public class locationTransitionReceiver extends BroadcastReceiver{
 		@Override
 		public void onReceive(Context context, Intent intent)
@@ -206,31 +222,41 @@ public class Bluemd extends Activity {
 				final String action = intent.getAction();
 				if (Bluemd.GEO_REQUEST_DISCONNECT_DEVICE.equals(action))
 					{
-						finishAndRemoveTask();
-
 						if (isOn)
 							{
-								liveData("6f");
-								Toast.makeText(context, VANITY_NAME + " ShutDown", Toast.LENGTH_SHORT).show();
-								Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Shutting Down");
-								finishAndRemoveTask();
+								shutDown(context,true);
 							}
 					}
 				else if (Bluemd.GEO_REQUEST_CONNECT_DEVICE.equals(action))
 					{
 						if (!(isOn))
 							{
-								String msg = VANITY_NAME + " AutoStart";
-								GeofenceNotificationHelper notificationHelper = new GeofenceNotificationHelper(context);
-								notificationHelper.sendHighPriorityNotification("LazyBone GeoFence", msg, Bluemd.class);
-								liveData("65");
-								Toast.makeText(context, VANITY_NAME + " AutoStart", Toast.LENGTH_SHORT).show();
-								Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Starting");
+								autoStart(context);
 							}
 					}
 				}
 		}
 
+	private void autoStart(Context context)
+		{
+			if (!(isOn))
+				{
+					String msg = VANITY_NAME + " AutoStart";
+					GeofenceNotificationHelper notificationHelper = new GeofenceNotificationHelper(context);
+					notificationHelper.sendHighPriorityNotification("LazyBone GeoFence", msg, Bluemd.class);
+					liveData("65");
+					Toast.makeText(context, VANITY_NAME + " AutoStart", Toast.LENGTH_SHORT).show();
+					Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Starting");
+				}
+		}
+	private void shutDown(Context context, Boolean exit)
+		{
+			liveData("6f");
+			Toast.makeText(context, VANITY_NAME + " ShutDown", Toast.LENGTH_SHORT).show();
+			Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Shutting Down");
+			if (exit)
+				finishAndRemoveTask();
+		}
 	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver()
 		{
 			@Override
@@ -337,45 +363,36 @@ public class Bluemd extends Activity {
 		}
 	}
 
-	public String convertStringToHex(String str) {
-		char[] chars = str.toCharArray();
-		StringBuilder hex = new StringBuilder();
-		for (char aChar : chars)
-				hex.append(Integer.toHexString(aChar));
-		return hex.toString();
-	}
-
-	private ProgressDialog progressDialog;
-	private FirstTimeThread firstTimeThread;
-	private boolean isConnected = false;
-	public static final String PREFS_NAME = "MyPrefsFile";
-
-	public SharedPreferences preferences;
-	private SharedPreferences defaultPreferences;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+ 		appContext = getApplicationContext();
 		setContentView(R.layout.ac_main);
 
 		defaultPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences = getSharedPreferences(PREFS_NAME, 0);
-		Boolean AUTO_START_ENABLED = false;
 
+		boolean AUTO_START_ENABLED = false;
 		Boolean BT_AUTO_START_ENABLED = preferences.getBoolean(ENABLE_BT_AUTOSTART_KEY, false);
 		Boolean WIFI_AUTO_START_ENABLED = preferences.getBoolean(ENABLE_WIFI_MONITORING_KEY, false);
 		GEOFENCE_MONITORING_ENABLED = preferences.getBoolean(ENABLE_GEOFENCE_MONITORING_KEY, false);
+		AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME = preferences.getString(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME_KEY, "");
 
 		if (BT_AUTO_START_ENABLED || WIFI_AUTO_START_ENABLED)
 			AUTO_START_ENABLED = true;
 
 		receiver = new BluetoothListenerReceiver();
-		registerReceiver(receiver, makeFilter());
+		registerReceiver(receiver, BT_ADPT_makeFilter());
 
 		locationTransitionReceiver = new locationTransitionReceiver();
 		registerReceiver(locationTransitionReceiver, makeLocationTransitionFilter() );
 
+		if (WIFI_AUTO_START_ENABLED)
+			{
+				bootUp = true;
+				registerNetworkCallback();
+			}
 
 		iv_connect_status = findViewById(R.id.iv_connect_status);
 		btn_connect_name = findViewById(R.id.btn_connect_name);
@@ -398,7 +415,7 @@ public class Bluemd extends Activity {
 			}
 
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-		bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+		bindService(gattServiceIntent, mBLE_serviceConnection, BIND_AUTO_CREATE);
 
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (mBluetoothAdapter == null)
@@ -406,7 +423,6 @@ public class Bluemd extends Activity {
 				finishDialogNoBluetooth();
 				return;
 			}
-
 
 		btn_status.setOnClickListener(v -> {
 			resetAutoDisconnect();
@@ -443,7 +459,6 @@ public class Bluemd extends Activity {
 		address = SharedPreferencesUtil.getString(Bluemd.this, ADDRESS, "");
 		mConnectedDeviceName = SharedPreferencesUtil.getString(Bluemd.this, ADDRESS_NAME, "");
 
-
 		// AUTO START CONNECT DIALOG - For Registered Device Automatic Connection
 		if (AUTO_START_ENABLED)
 			{
@@ -460,8 +475,6 @@ public class Bluemd extends Activity {
 			if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
 				enableUserLocation();
 
-
-			Context appContext = getApplicationContext();
 			bg_loc_service_intent = new Intent(appContext, BackgroundGeoFenceLocationService.class);
 			appContext.startForegroundService(bg_loc_service_intent);
 			Toast.makeText(appContext, "Located Updates Enabled...", Toast.LENGTH_SHORT).show();
@@ -479,11 +492,63 @@ public class Bluemd extends Activity {
 				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
 		}
 
-	private IntentFilter makeFilter() {
+	private IntentFilter BT_ADPT_makeFilter() {
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
 		return filter;
 	}
+
+	public void registerNetworkCallback()
+		{
+			try {
+				ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+				NetworkRequest.Builder builder = new NetworkRequest.Builder();
+				connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback()
+					{
+						@Override
+						public void onAvailable(Network network)
+							{
+								if (bootUp)
+									{
+										bootUp = false;
+										return;
+									}
+
+								WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
+								String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
+								if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
+								{
+									Intent transition_broadcast = new Intent();
+									transition_broadcast.setAction(Bluemd.GEO_REQUEST_DISCONNECT_DEVICE);
+									sendBroadcast(transition_broadcast);
+									home_wiFi_connected = true; // Global Static Variable
+								}
+							}
+
+						@Override
+						public void onLost(Network network)
+							{
+								if (!isOn)
+									{
+										WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
+										String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
+										if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
+											{
+												Intent transition_broadcast = new Intent();
+												transition_broadcast.setAction(Bluemd.GEO_REQUEST_CONNECT_DEVICE);
+												sendBroadcast(transition_broadcast);
+												home_wiFi_connected = false; // Global Static Variable
+											}
+									}
+							}
+					}
+
+				);
+				home_wiFi_connected = false;
+			}catch (Exception e){
+				home_wiFi_connected = false;
+			}
+		}
 
 	// Check whether positioning and gps are turned on
 	private void checkIsConnect() {
@@ -631,7 +696,6 @@ public class Bluemd extends Activity {
 		return true;
 	}
 
-
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -755,11 +819,12 @@ public class Bluemd extends Activity {
 		if (firstTimeThread != null)
 			firstTimeThread.StopThread();
 
-		unbindService(mServiceConnection);
+		unbindService(mBLE_serviceConnection);
 		mBluetoothLeService = null;
 		unregisterReceiver(receiver);
 		unregisterReceiver(locationTransitionReceiver);
-		stopService(bg_loc_service_intent);
+		if (bg_loc_service_intent != null)
+			stopService(bg_loc_service_intent);
 	}
 
 	@Override

@@ -18,6 +18,14 @@ public class Util {
 		return ret;
 	}
 
+	public String convertStringToHex(String str) {
+		char[] chars = str.toCharArray();
+		StringBuilder hex = new StringBuilder();
+		for (char aChar : chars)
+			hex.append(Integer.toHexString(aChar));
+		return hex.toString();
+	}
+
 	private static byte uniteBytes(String src0, String src1) {
 		byte b0 = Byte.decode("0x" + src0);
 		b0 = (byte) (b0 << 4);
