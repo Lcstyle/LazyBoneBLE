@@ -2,7 +2,10 @@ package com.tinysine.lazyboneble;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -16,6 +19,10 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
+
+import com.tinysine.lazyboneble.geolocation.GeofenceBroadcastReceiver;
+import com.tinysine.lazyboneble.service.BT_AutoStartReceiver;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,6 +30,7 @@ import static com.tinysine.lazyboneble.Bluemd.PREFS_NAME;
 
 public class SettingsActivity extends Activity
     {
+        Context ApplicationContext;
 
         private LinearLayout ll_wifi_trigger_dev_name;
         private LinearLayout ll_bt_trigger_dev_name;
@@ -55,7 +63,7 @@ public class SettingsActivity extends Activity
 
         public static String ENABLE_BT_AUTOSTART_KEY = "enable_bt_auto_connect";
         public static String AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY = "bt_connect_trigger_dev";
-        public static String AUTO_CONNECT_WIFI_DEV_NAME_KEY = "wifi_connect_trigger_dev";
+        public static String AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME_KEY = "wifi_connect_trigger_dev";
         public static String AUTO_CONNECT_SCAN_PERIOD_KEY = "auto_scan_period";
         public static String ENABLE_GEOFENCE_MONITORING_KEY = "enable_geofence_monitoring";
         public static String ENABLE_WIFI_MONITORING_KEY = "enable_wifi_monitoring";
@@ -66,6 +74,8 @@ public class SettingsActivity extends Activity
 
         private SharedPreferences.Editor sharedPrefsEditor;
         private SharedPreferences.Editor prefsEditor;
+
+        private static final String TAG = "SettingsActivity";
 
         @Override
         protected void onCreate(Bundle savedInstanceState)
@@ -99,7 +109,7 @@ public class SettingsActivity extends Activity
                 AUTO_CONNECT_BT_TRIGGER_DEV_NAME = preferences.getString(AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY, "");
                 et_bt_trigger_dev_name.setText(AUTO_CONNECT_BT_TRIGGER_DEV_NAME);
 
-                AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME = preferences.getString(AUTO_CONNECT_WIFI_DEV_NAME_KEY, "");
+                AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME = preferences.getString(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME_KEY, "");
                 et_wifi_trigger_dev_name.setText(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME);
 
                 ENABLE_GEOFENCE_MONITORING = preferences.getBoolean(ENABLE_GEOFENCE_MONITORING_KEY, false);
@@ -111,6 +121,8 @@ public class SettingsActivity extends Activity
                 GEOFENCE_RADIUS = preferences.getFloat(GEOFENCE_RADIUS_KEY, 200);
                 sb_geofence_radius.setProgress((int) Math.round(GEOFENCE_RADIUS));
 
+                VANITY_NAME = preferences.getString(VANITY_NAME_KEY, "");
+                et_vanity_name.setText(VANITY_NAME);
             }
 
         @Override
@@ -118,30 +130,32 @@ public class SettingsActivity extends Activity
             {
                 super.onDestroy();
                 update_vanity_name();
-                update_trigger_dev_name();
+                update_bt_trigger_dev_name();
+                update_wifi_trigger_dev_name();
                 sharedPrefsEditor.apply();
                 prefsEditor.apply();
                 Toast.makeText(this, "Preferences Updated", Toast.LENGTH_SHORT).show();
             }
 
-        private void update_trigger_dev_name()
+        private void update_bt_trigger_dev_name()
             {
                 String updated_trigger_dev_name = et_bt_trigger_dev_name.getText().toString();
                 if (!(AUTO_CONNECT_BT_TRIGGER_DEV_NAME.equals(updated_trigger_dev_name)))
-                    {
                         prefsEditor.putString(AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY, updated_trigger_dev_name);
-                        Toast.makeText(this, "Triggering Device Name Updated", Toast.LENGTH_SHORT).show();
-                    }
+            }
+
+        private void update_wifi_trigger_dev_name()
+            {
+                String updated_trigger_dev_name = et_wifi_trigger_dev_name.getText().toString();
+                if (!(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.equals(updated_trigger_dev_name)))
+                        prefsEditor.putString(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME_KEY, updated_trigger_dev_name);
             }
 
         private void update_vanity_name()
             {
                 String updated_vanity_name = et_vanity_name.getText().toString();
                 if (!(VANITY_NAME.equals(updated_vanity_name)))
-                    {
                         prefsEditor.putString(VANITY_NAME_KEY, updated_vanity_name);
-                        Toast.makeText(this, "Vanity Name Updated", Toast.LENGTH_SHORT).show();
-                    }
             }
 
         public void onBack(View v) {
@@ -153,7 +167,6 @@ public class SettingsActivity extends Activity
             String seconds = Long.toString(TimeUnit.MILLISECONDS.toSeconds(GENERAL_SCAN_PERIOD));
             tv_scanTime.setText(String.format("%sS", seconds));
             sharedPrefsEditor.putLong(GENERAL_SCAN_PERIOD_KEY, GENERAL_SCAN_PERIOD);
-            Toast.makeText(this, "Scan Time Settings Updated", Toast.LENGTH_SHORT).show();
         }
 
         private void updateAutoConnectTime()
@@ -161,7 +174,6 @@ public class SettingsActivity extends Activity
             String seconds = Long.toString(TimeUnit.MILLISECONDS.toSeconds(AUTO_CONNECT_SCAN_PERIOD));
             tv_autoConnectTime.setText(String.format("%sS", seconds));
             sharedPrefsEditor.putLong(AUTO_CONNECT_SCAN_PERIOD_KEY, AUTO_CONNECT_SCAN_PERIOD);
-            Toast.makeText(this, "AutoConnect Time Settings Updated", Toast.LENGTH_SHORT).show();
         }
 
         private void updateGeoFenceDwellTime()
@@ -169,41 +181,38 @@ public class SettingsActivity extends Activity
                 String seconds = Integer.toString(GEOFENCE_DWELL_DELAY);
                 tv_geoFenceDwellDelay.setText(String.format("%sS", seconds));
                 prefsEditor.putInt(GEOFENCE_DWELL_TIME_KEY, GEOFENCE_DWELL_DELAY);
-                Toast.makeText(this, "GeoFence Dwell Time Settings Updated", Toast.LENGTH_SHORT).show();
             }
 
         private void updateGeoFenceRadius()
             {
-
-                sb_geofence_radius.setProgress((int) Math.round(GEOFENCE_RADIUS));
+                int radiusInt = (int) Math.round(GEOFENCE_RADIUS);
+                String radiusStr = Integer.toString(radiusInt);
+                sb_geofence_radius.setProgress(radiusInt);
                 prefsEditor.putFloat(GEOFENCE_RADIUS_KEY, GEOFENCE_RADIUS);
-                Toast.makeText(this, "GeoFence Radius Settings Updated", Toast.LENGTH_SHORT).show();
             }
 
         private void updateGeoFenceMonitoring()
             {
                 cb_enable_geofence_monitoring.setChecked(ENABLE_GEOFENCE_MONITORING);
                 prefsEditor.putBoolean(ENABLE_GEOFENCE_MONITORING_KEY, ENABLE_GEOFENCE_MONITORING);
-                Toast.makeText(this, "GeoFence Monitoring Settings Updated", Toast.LENGTH_SHORT).show();
             }
 
         private void updateBTAutoStart()
             {
                 cb_enable_BT_autoStart.setChecked(ENABLE_BT_AUTOSTART);
                 prefsEditor.putBoolean(ENABLE_BT_AUTOSTART_KEY, ENABLE_BT_AUTOSTART);
-                Toast.makeText(this, "BlueTooth AutoStart Settings Updated", Toast.LENGTH_SHORT).show();
             }
 
         private void updateWiFiMonitoring()
             {
                 cb_enable_wifi_monitoring.setChecked(ENABLE_WIFI_MONITORING);
                 prefsEditor.putBoolean(ENABLE_WIFI_MONITORING_KEY, ENABLE_WIFI_MONITORING);
-                Toast.makeText(this, "WiFi Monitoring Settings Updated", Toast.LENGTH_SHORT).show();
             }
+
 
         @SuppressLint("ClickableViewAccessibility")
         private void init() {
-
+            ApplicationContext = getApplicationContext();
             Button bt_geo_add_time = findViewById(R.id.bt_geo_add_time);
             Button bt_geo_minus_time = findViewById(R.id.bt_geo_minus_time);
 
@@ -224,6 +233,26 @@ public class SettingsActivity extends Activity
             ll_wifi_trigger_dev_name = findViewById(R.id.ll_wifi_trigger_dev_name);
             ll_bt_trigger_dev_name = findViewById(R.id.ll_bt_trigger_dev_name);
             ll_geofence_radius = findViewById(R.id.ll_geofence_radius);
+
+            ComponentName BT_AutoStartReceiver_Component = new ComponentName(this, BT_AutoStartReceiver.class);
+            final int[] BT_AutoStartReceiver_enable_status = {this.getPackageManager().getComponentEnabledSetting(BT_AutoStartReceiver_Component)};
+            if (BT_AutoStartReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_ENABLED)
+                {
+                    Log.d(TAG, BT_AutoStartReceiver_Component.getShortClassName() + " is enabled");
+                } else if (BT_AutoStartReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_DISABLED)
+                {
+                    Log.d(TAG, BT_AutoStartReceiver_Component.getShortClassName() + " is disabled");
+                }
+
+            ComponentName GeoFenceBroadCastReceiver_Component = new ComponentName(this, GeofenceBroadcastReceiver.class);
+            final int[] GeoFenceBroadcastReceiver_enable_status = {this.getPackageManager().getComponentEnabledSetting(GeoFenceBroadCastReceiver_Component)};
+            if (GeoFenceBroadcastReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_ENABLED)
+                {
+                    Log.d(TAG, GeoFenceBroadCastReceiver_Component.getShortClassName() + " is enabled");
+                } else if (GeoFenceBroadcastReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_DISABLED)
+                {
+                    Log.d(TAG, GeoFenceBroadCastReceiver_Component.getShortClassName() + " is disabled");
+                }
 
             bt_geo_minus_time.setOnTouchListener(new View.OnTouchListener() {
                 private Handler mHandler;
@@ -340,9 +369,25 @@ public class SettingsActivity extends Activity
                             ENABLE_GEOFENCE_MONITORING = isChecked;
                             updateGeoFenceMonitoring();
                             if (isChecked)
-                                ll_geofence_radius.setVisibility(View.VISIBLE);
+                                {
+                                    ll_geofence_radius.setVisibility(View.VISIBLE);
+                                    if (!(GeoFenceBroadcastReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_ENABLED))
+                                        {
+                                            //Enable
+                                            ApplicationContext.getPackageManager().setComponentEnabledSetting(GeoFenceBroadCastReceiver_Component, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+                                            GeoFenceBroadcastReceiver_enable_status[0] = PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+                                        }
+                                }
                             else
-                                ll_geofence_radius.setVisibility(View.GONE);
+                                {
+                                    ll_geofence_radius.setVisibility(View.GONE);
+                                    if (GeoFenceBroadcastReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_ENABLED)
+                                        {
+                                            //Disable
+                                            ApplicationContext.getPackageManager().setComponentEnabledSetting(GeoFenceBroadCastReceiver_Component, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+                                            GeoFenceBroadcastReceiver_enable_status[0] = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+                                        }
+                                }
                         }
                 });
 
@@ -354,9 +399,28 @@ public class SettingsActivity extends Activity
                             ENABLE_BT_AUTOSTART = isChecked;
                             updateBTAutoStart();
                             if (isChecked)
-                                ll_bt_trigger_dev_name.setVisibility(View.VISIBLE);
+                                {
+                                    ll_bt_trigger_dev_name.setVisibility(View.VISIBLE);
+                                    if (!(BT_AutoStartReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_ENABLED))
+                                        {
+                                            //Enable
+                                            ApplicationContext.getPackageManager().setComponentEnabledSetting(BT_AutoStartReceiver_Component, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+                                            BT_AutoStartReceiver_enable_status[0] = PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+                                        }
+
+
+                                }
                             else
-                                ll_bt_trigger_dev_name.setVisibility(View.GONE);
+                                {
+                                    ll_bt_trigger_dev_name.setVisibility(View.GONE);
+                                    if (BT_AutoStartReceiver_enable_status[0] == PackageManager.COMPONENT_ENABLED_STATE_ENABLED)
+                                        {
+                                            //Disable
+                                            ApplicationContext.getPackageManager().setComponentEnabledSetting(BT_AutoStartReceiver_Component, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+                                            BT_AutoStartReceiver_enable_status[0] = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+                                        }
+
+                                }
                         }
                 });
 

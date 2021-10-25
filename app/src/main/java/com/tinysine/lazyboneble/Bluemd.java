@@ -58,6 +58,9 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.tinysine.lazyboneble.DeviceListActivity.reg_dev_name;
 import static com.tinysine.lazyboneble.DeviceListActivity.reg_dev_password;
 import static com.tinysine.lazyboneble.DeviceListActivity.registered_device_name_key;
+import static com.tinysine.lazyboneble.SettingsActivity.ENABLE_BT_AUTOSTART_KEY;
+import static com.tinysine.lazyboneble.SettingsActivity.ENABLE_GEOFENCE_MONITORING_KEY;
+import static com.tinysine.lazyboneble.SettingsActivity.ENABLE_WIFI_MONITORING_KEY;
 import static com.tinysine.lazyboneble.SettingsActivity.VANITY_NAME_KEY;
 
 @SuppressLint("InflateParams")
@@ -72,6 +75,7 @@ public class Bluemd extends Activity {
 
 	private boolean ok = false;
 	private boolean isModeConnectSuccess = false;
+	private Boolean GEOFENCE_MONITORING_ENABLED;
 
 	public static final String GEO_REQUEST_DISCONNECT_DEVICE = "REQUEST_DISCONNECT_DEVICE";
 	public static final String GEO_REQUEST_CONNECT_DEVICE = "REQUEST_CONNECT_DEVICE";
@@ -162,11 +166,9 @@ public class Bluemd extends Activity {
 	 */
 	private void setButtonStatus() {
 		if (isOn)
-			{
-				btn_status.setBackgroundResource(R.drawable.btn_selected);
-				dla_instance.setHomeGeoFence(this);
-			}
-		else btn_status.setBackgroundResource(R.drawable.btn_normal);
+			btn_status.setBackgroundResource(R.drawable.btn_selected);
+		else
+			btn_status.setBackgroundResource(R.drawable.btn_normal);
 	}
 
 
@@ -359,12 +361,21 @@ public class Bluemd extends Activity {
 
 		defaultPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		preferences = getSharedPreferences(PREFS_NAME, 0);
+		Boolean AUTO_START_ENABLED = false;
+
+		Boolean BT_AUTO_START_ENABLED = preferences.getBoolean(ENABLE_BT_AUTOSTART_KEY, false);
+		Boolean WIFI_AUTO_START_ENABLED = preferences.getBoolean(ENABLE_WIFI_MONITORING_KEY, false);
+		GEOFENCE_MONITORING_ENABLED = preferences.getBoolean(ENABLE_GEOFENCE_MONITORING_KEY, false);
+
+		if (BT_AUTO_START_ENABLED || WIFI_AUTO_START_ENABLED)
+			AUTO_START_ENABLED = true;
 
 		receiver = new BluetoothListenerReceiver();
 		registerReceiver(receiver, makeFilter());
 
 		locationTransitionReceiver = new locationTransitionReceiver();
 		registerReceiver(locationTransitionReceiver, makeLocationTransitionFilter() );
+
 
 		iv_connect_status = findViewById(R.id.iv_connect_status);
 		btn_connect_name = findViewById(R.id.btn_connect_name);
@@ -432,14 +443,17 @@ public class Bluemd extends Activity {
 		address = SharedPreferencesUtil.getString(Bluemd.this, ADDRESS, "");
 		mConnectedDeviceName = SharedPreferencesUtil.getString(Bluemd.this, ADDRESS_NAME, "");
 
+
 		// AUTO START CONNECT DIALOG - For Registered Device Automatic Connection
-		Intent serverIntent = new Intent(this, DeviceListActivity.class);
-		startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+		if (AUTO_START_ENABLED)
+			{
+				Intent serverIntent = new Intent(this, DeviceListActivity.class);
+				startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+			}
 	}
 
 	private void startLocationUpdates()
 		{
-			int backgroundLocationPermissionState = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION);
 			if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED)
 				enableUserLocation();
 
@@ -709,7 +723,8 @@ public class Bluemd extends Activity {
 				if (resultCode == RESULT_OK) {
 					mConnectedDeviceAddress = data.getStringExtra(DeviceListActivity.DEVICE_ADDRESS_KEY);
 					live(mConnectedDeviceAddress);
-					startLocationUpdates();
+					if (GEOFENCE_MONITORING_ENABLED)
+						startLocationUpdates();
 					}
 				break;
 			case REQUEST_ENABLE_BT:

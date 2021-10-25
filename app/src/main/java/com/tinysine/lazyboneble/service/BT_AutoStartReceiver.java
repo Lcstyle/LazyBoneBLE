@@ -20,7 +20,7 @@ import static androidx.core.content.ContextCompat.getSystemService;
 import static com.tinysine.lazyboneble.SettingsActivity.AUTO_CONNECT_BT_TRIGGER_DEV_NAME_KEY;
 
 
-public class AutoStartReceiver extends BroadcastReceiver
+public class BT_AutoStartReceiver extends BroadcastReceiver
     {
 
         private void createNotificationChannel(Context context) {

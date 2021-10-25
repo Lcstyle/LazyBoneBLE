@@ -73,47 +73,49 @@ public class BackgroundGeoFenceLocationService extends Service
             }
 
         @Override
-        public void onRebind(Intent intent) {
-            // Called when a client (MainActivity in case of this sample) returns to the foreground
-            // and binds once again with this service. The service should cease to be a foreground
-            // service when that happens.
-            Log.i(TAG, "in onRebind()");
-            stopForeground(true);
-            super.onRebind(intent);
-        }
+        public void onRebind(Intent intent)
+            {
+                // Called when a client (MainActivity in case of this sample) returns to the foreground
+                // and binds once again with this service. The service should cease to be a foreground
+                // service when that happens.
+                Log.i(TAG, "in onRebind()");
+                stopForeground(true);
+                super.onRebind(intent);
+            }
 
 
         @Override
-        public boolean onUnbind(Intent intent) {
-            Log.i(TAG, "Last client unbound from service");
+        public boolean onUnbind(Intent intent)
+            {
+                Log.i(TAG, "Last client unbound from service");
+                // Called when the last client (MainActivity in case of this sample) unbinds from this
+                // service. If this method is called due to a configuration change in MainActivity, we
+                // do nothing. Otherwise, we make this service a foreground service.
+                Log.i(TAG, "Starting foreground service");
+                startForeground(1000, bgLocationNotification);
 
-            // Called when the last client (MainActivity in case of this sample) unbinds from this
-            // service. If this method is called due to a configuration change in MainActivity, we
-            // do nothing. Otherwise, we make this service a foreground service.
-            Log.i(TAG, "Starting foreground service");
-            startForeground(1000, bgLocationNotification);
-
-            return true; // Ensures onRebind() is called when a client re-binds.
-        }
+                return true; // Ensures onRebind() is called when a client re-binds.
+            }
 
         @Override
         public int onStartCommand(Intent intent, int flags, int startId)
             {
                 Log.i(TAG, "Service started");
-                boolean startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION,false);
+                boolean startedFromNotification = intent.getBooleanExtra(EXTRA_STARTED_FROM_NOTIFICATION, false);
 
                 // We got here because the user decided to remove location updates from the notification.
-                if (startedFromNotification) {
-                    fusedLocationClient.removeLocationUpdates(locationCallback);
-                    stopSelf();
-                }
+                if (startedFromNotification)
+                    {
+                        fusedLocationClient.removeLocationUpdates(locationCallback);
+                        stopSelf();
+                    }
                 ServiceCancelIntent = new Intent(this, BackgroundGeoFenceLocationService.class);
                 Intent ApplicationLaunchIntent = new Intent(this, Bluemd.class);
 
                 ServiceCancelIntent.putExtra(EXTRA_STARTED_FROM_NOTIFICATION, true);
 
                 PendingIntent ServiceIntent = PendingIntent.getService(this, 1001, ServiceCancelIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-                PendingIntent ApplicationIntent = PendingIntent.getActivity(this, 1001, ApplicationLaunchIntent, PendingIntent.FLAG_UPDATE_CURRENT| PendingIntent.FLAG_IMMUTABLE);
+                PendingIntent ApplicationIntent = PendingIntent.getActivity(this, 1001, ApplicationLaunchIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
                 SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
                 String VANITY_NAME = preferences.getString(VANITY_NAME_KEY, "");
@@ -123,7 +125,7 @@ public class BackgroundGeoFenceLocationService extends Service
                         .addAction(R.drawable.im_disconnect, "Stop", ServiceIntent)
                         .setDeleteIntent(ServiceIntent)
                         .setContentTitle(getText(R.string.bg_loc_notification_title))
-                        .setContentText(getText(R.string.bg_loc_notification_message) + VANITY_NAME)  // add vanity name printout (no space required for msg+vanityname concatenation)
+                        .setContentText(getText(R.string.bg_loc_notification_message) + " " + VANITY_NAME)  // add vanity name printout (no space required for msg+vanityname concatenation)
                         .setSmallIcon(R.drawable.icon)
                         .setContentIntent(ApplicationIntent)
                         .build();
@@ -202,6 +204,17 @@ public class BackgroundGeoFenceLocationService extends Service
                 PendingIntent pendingIntent = geofenceHelper.getPendingIntent();
                 AtomicReference<String> returnMsg = new AtomicReference<>("GeoFence Added");
 
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                    {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+//                        return TODO;
+                    }
                 mGeofencingClient.addGeofences(geofencingRequest, pendingIntent).addOnSuccessListener(aVoid ->
                         Log.d(TAG, "Home Location Geofence Successfully registered"))
                         .addOnFailureListener(e -> {
@@ -211,9 +224,6 @@ public class BackgroundGeoFenceLocationService extends Service
                         });
                 return returnMsg.get();
             }
-
-
-
 
         private void setHomeLatLng()
             {
@@ -286,8 +296,5 @@ public class BackgroundGeoFenceLocationService extends Service
 
                 this.createLocationRequest();
                 this.requestLocationUpdates();
-
             }
-
-
     }
