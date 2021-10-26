@@ -14,4 +14,6 @@ register a home location, simply press and hold on the map activity under settin
 5. if the device is currently connected and is in status Off, after exiting the home location geoFence the device will automatically be turned on.
 6. when entering the home geoFence, after 2 minutes (configurable) inside the home geoFence, the device will be auto-shutoff (auto-power off)
 7. WiFi Connection Manager turns on switch when WiFi network is disconnected, turns off Switch when WiFi Network Connects
-8. Settings can choose WiFi or GeoFence automatic switch management based on settings in General Settings
+8. Settings can choose WiFi or GeoFence automatic switch management based on settings in General Settings (or both)
+9. Future Feature includes ability to choose Hybrid (GeoFence + WiFi) intelligent connection management, here's how it is proopsed to work:
+When you leave the GeoFence, the WiFi connection manager will be enabled for auto-off, meaning next time you renter the geoFence, if WiFi reconnects, then the device will be disabled.  The benefit is that WiFi connects/disconnects will be ignored if you do not exit the home geoFence location to prevent false triggering.
