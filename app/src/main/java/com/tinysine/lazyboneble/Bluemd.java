@@ -80,44 +80,50 @@ public class Bluemd extends Activity {
 	private ProgressDialog progressDialog;
 	private FirstTimeThread firstTimeThread;
 
-	public boolean isOn = false;
-
 	private Boolean bootUp;
 	private Boolean GEOFENCE_MONITORING_ENABLED;
-	private boolean home_wiFi_connected;
-	private boolean isConnected = false;
+
+	private boolean mEnablingBT = false;
 	private boolean isModeConnectSuccess = false;
 	private boolean isNeedPassword = false;
 	private boolean isVerify = false;
 	private boolean ok = false;
+	private static boolean isConnected = false;
+	private static boolean isOn = false;
+
+	public static String strInputPsd = "";
 
 	public static final String PREFS_NAME = "MyPrefsFile";
-	public static final String GEO_REQUEST_DISCONNECT_DEVICE = "REQUEST_DISCONNECT_DEVICE";
-	public static final String GEO_REQUEST_CONNECT_DEVICE = "REQUEST_CONNECT_DEVICE";
+	public static final String TRANSITION_RCVR_REQUEST_SWITCH_OFF = "REQUEST_DISCONNECT_DEVICE";
+	public static final String TRANSITION_RCVR_REQUEST_SWITCH_ON = "REQUEST_CONNECT_DEVICE";
+
+	private String address; // device address
+	private String mConnectedDeviceAddress = null;
+	private String mConnectedDeviceName; // device name
+
+	private static String AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME;
+	private static String VANITY_NAME;
+
+	private static final String ADDRESS = "address";	//Local cache address identification
+	private static final String ADDRESS_NAME = "addressName"; // Local cache address identification
 
 	public static final int REQUEST_CONNECT_DEVICE = 1;
 	public static final int REQUEST_ENABLE_BT = 2;
 
 	private int status = Util.BT_DATA_PASSWORD;
-
 	private static final int BAIDU_READ_PHONE_STATE = 100;//Location permission request
 	private static final int PRIVATE_CODE = 1315;//Turn on GPS permissions
 
-	private static String VANITY_NAME;
-	private static String AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME;
-
-	private static final String ADDRESS = "address";	//Local cache address identification
-	private static final String ADDRESS_NAME = "addressName"; // Local cache address identification
-
-	private String address; // device address
-	private String mConnectedDeviceName; // device name
+	private UpdateThread updateThread = null;
+	private final Handler mHandler = new Handler();
+	private ProgressDialog pDialog;
 
 	private ModeThread modeThread = null;
 
-	private BluetoothLeService mBluetoothLeService;
-
 	private BroadcastReceiver locationTransitionReceiver;
-	private BroadcastReceiver wiFiTransitionReceiver;
+
+	private BluetoothAdapter mBluetoothAdapter = null;
+	private BluetoothLeService mBluetoothLeService;
 	private BluetoothListenerReceiver receiver; //Bluetooth open and close monitoring service
 
 	public SharedPreferences preferences;
@@ -220,18 +226,19 @@ public class Bluemd extends Activity {
 		public void onReceive(Context context, Intent intent)
 			{
 				final String action = intent.getAction();
-				if (Bluemd.GEO_REQUEST_DISCONNECT_DEVICE.equals(action))
+				final boolean GEOFENCE = intent.getBooleanExtra("GEOFENCE", false);
+
+				if ((!(GEOFENCE) || GEOFENCE_MONITORING_ENABLED))
 					{
-						if (isOn)
+						if (Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF.equals(action))
 							{
-								shutDown(context,true);
+								if (isOn)
+									shutDown(context);
 							}
-					}
-				else if (Bluemd.GEO_REQUEST_CONNECT_DEVICE.equals(action))
-					{
-						if (!(isOn))
+						else if (Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON.equals(action))
 							{
-								autoStart(context);
+								if (!(isOn))
+									autoStart(context);
 							}
 					}
 				}
@@ -249,14 +256,15 @@ public class Bluemd extends Activity {
 					Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Starting");
 				}
 		}
-	private void shutDown(Context context, Boolean exit)
+
+	private void shutDown(Context context)
 		{
 			liveData("6f");
 			Toast.makeText(context, VANITY_NAME + " ShutDown", Toast.LENGTH_SHORT).show();
 			Log.e("LocTransRcvr:", "LazyBone GeoFence " + VANITY_NAME + " Shutting Down");
-			if (exit)
-				finishAndRemoveTask();
+			finishAndRemoveTask();
 		}
+
 	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver()
 		{
 			@Override
@@ -383,7 +391,7 @@ public class Bluemd extends Activity {
 			AUTO_START_ENABLED = true;
 
 		receiver = new BluetoothListenerReceiver();
-		registerReceiver(receiver, BT_ADPT_makeFilter());
+		registerReceiver(receiver, makeBTAdptIntentFilter());
 
 		locationTransitionReceiver = new locationTransitionReceiver();
 		registerReceiver(locationTransitionReceiver, makeLocationTransitionFilter() );
@@ -492,7 +500,7 @@ public class Bluemd extends Activity {
 				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
 		}
 
-	private IntentFilter BT_ADPT_makeFilter() {
+	private IntentFilter makeBTAdptIntentFilter() {
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
 		return filter;
@@ -511,42 +519,40 @@ public class Bluemd extends Activity {
 								if (bootUp)
 									{
 										bootUp = false;
-										return;
 									}
-
-								WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
-								String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
-								if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
-								{
-									Intent transition_broadcast = new Intent();
-									transition_broadcast.setAction(Bluemd.GEO_REQUEST_DISCONNECT_DEVICE);
-									sendBroadcast(transition_broadcast);
-									home_wiFi_connected = true; // Global Static Variable
-								}
-							}
-
-						@Override
-						public void onLost(Network network)
-							{
-								if (!isOn)
+								else if (isOn)
 									{
 										WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
 										String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
 										if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
 											{
 												Intent transition_broadcast = new Intent();
-												transition_broadcast.setAction(Bluemd.GEO_REQUEST_CONNECT_DEVICE);
+												transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF);
 												sendBroadcast(transition_broadcast);
-												home_wiFi_connected = false; // Global Static Variable
+											}
+									}
+							}
+
+						@Override
+						public void onLost(Network network)
+							{
+								if (!(isOn))
+									{
+										WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
+										String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
+										if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
+											{
+												Intent transition_broadcast = new Intent();
+												transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON);
+												sendBroadcast(transition_broadcast);
 											}
 									}
 							}
 					}
 
 				);
-				home_wiFi_connected = false;
+
 			}catch (Exception e){
-				home_wiFi_connected = false;
 			}
 		}
 
@@ -597,8 +603,8 @@ public class Bluemd extends Activity {
 
 	private static IntentFilter makeLocationTransitionFilter() {
 		final IntentFilter intentFilter = new IntentFilter();
-		intentFilter.addAction(Bluemd.GEO_REQUEST_DISCONNECT_DEVICE);
-		intentFilter.addAction(Bluemd.GEO_REQUEST_CONNECT_DEVICE);
+		intentFilter.addAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF);
+		intentFilter.addAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON);
 		return intentFilter;
 	}
 
@@ -641,10 +647,6 @@ public class Bluemd extends Activity {
 		mEnablingBT = false;
 		showGPSContacts();
 	}
-
-	private BluetoothAdapter mBluetoothAdapter = null;
-	private boolean mEnablingBT = false;
-
 
 	@Override
 	public synchronized void onResume() {
@@ -833,8 +835,6 @@ public class Bluemd extends Activity {
 		unregisterReceiver(mGattUpdateReceiver);
 	}
 
-	private String mConnectedDeviceAddress = null;
-
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
@@ -905,9 +905,6 @@ public class Bluemd extends Activity {
 		sendData(password);
 	}
 
-	private ProgressDialog pDialog;
-	public static String strInputPsd = "";
-
 	private void sendRegisteredPassword()
 		{
 			String paString = "3F" + int2Byte(reg_dev_password);
@@ -942,7 +939,6 @@ public class Bluemd extends Activity {
 				.setNegativeButton("Quit", (arg0, arg1) -> resetDefault()).create().show();
 	}
 
-
 	private String int2Byte(String value) {
 		int va = Integer.parseInt(value);
 		String hex = Integer.toHexString(va);
@@ -957,7 +953,6 @@ public class Bluemd extends Activity {
 		btn_connect_name.setText(connectName);
 	}
 
-
 	private void resetAutoDisconnect() {
 		boolean isAutoMode = defaultPreferences.getBoolean(ModeSettingActivity.KEY_AUTO_MODE, false);
 		if (isAutoMode) {
@@ -968,10 +963,6 @@ public class Bluemd extends Activity {
 			updateThread.reset();
 		}
 	}
-
-	private UpdateThread updateThread = null;
-
-	private final Handler mHandler = new Handler();
 
 	private class UpdateThread extends Thread {
 		boolean flag = true;
@@ -1027,22 +1018,27 @@ public class Bluemd extends Activity {
 				}).setNegativeButton("Cancel", null).create().show();
 	}
 
-	private class ModeThread extends Thread {
+	private class ModeThread extends Thread
+		{
+			private boolean isStop = false;
 
-		private boolean isStop = false;
+			@Override
+			public void run()
+				{
+					super.run();
+					try
+						{
+							sleep(3000);
+							if (!isStop && !isModeConnectSuccess)
+								sendStatus();
+						} catch (Exception ignored)
+						{
+						}
+				}
 
-		@Override
-		public void run() {
-			super.run();
-			try {
-				sleep(3000);
-				if (!isStop && !isModeConnectSuccess)
-					sendStatus();
-			} catch (Exception ignored) {
-			}
+			public void modeStop()
+				{
+					isStop = true;
+				}
 		}
-		public void modeStop() {
-			isStop = true;
-		}
-	}
 }

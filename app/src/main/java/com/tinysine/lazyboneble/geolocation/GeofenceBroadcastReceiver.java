@@ -55,14 +55,16 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
     private void send_disconnect_request(Context context)
         {
             Intent transition_broadcast = new Intent();
-            transition_broadcast.setAction(Bluemd.GEO_REQUEST_DISCONNECT_DEVICE);
+            transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF);
+            transition_broadcast.putExtra("GEOFENCE", true);
             context.sendBroadcast(transition_broadcast);
         }
 
     private void send_connect_request(Context context)
         {
             Intent transition_broadcast = new Intent();
-            transition_broadcast.setAction(Bluemd.GEO_REQUEST_CONNECT_DEVICE);
+            transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON);
+            transition_broadcast.putExtra("GEOFENCE", true);
             context.sendBroadcast(transition_broadcast);
         }
 }
