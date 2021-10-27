@@ -108,7 +108,9 @@ public class BackgroundGeoFenceLocationService extends Service
                     {
                         fusedLocationClient.removeLocationUpdates(locationCallback);
                         stopSelf();
+                        return START_NOT_STICKY;
                     }
+
                 ServiceCancelIntent = new Intent(this, BackgroundGeoFenceLocationService.class);
                 Intent ApplicationLaunchIntent = new Intent(this, Bluemd.class);
 
@@ -129,7 +131,6 @@ public class BackgroundGeoFenceLocationService extends Service
                         .setSmallIcon(R.drawable.icon)
                         .setContentIntent(ApplicationIntent)
                         .build();
-
 
                 startForeground(1000, bgLocationNotification);
                 return Service.START_NOT_STICKY;
@@ -165,7 +166,7 @@ public class BackgroundGeoFenceLocationService extends Service
                                     {
                                         Log.d(TAG, "onLocationResult: ");
                                         super.onLocationResult(locationResult);
-                                        //                                        onNewLocation(locationResult.getLastLocation());
+                                        // onNewLocation(locationResult.getLastLocation());
                                     }
                             }
                     };

@@ -73,7 +73,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-
             </intent-filter>
         </activity>
         <activity
@@ -101,9 +100,12 @@
         <receiver
             android:name=".geolocation.GeofenceBroadcastReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="false">
         </receiver>
-        <service android:name=".geolocation.BackgroundGeoFenceLocationService" android:enabled="true" android:foregroundServiceType="location"/>
+        <service
+            android:name=".geolocation.BackgroundGeoFenceLocationService"
+            android:enabled="true"
+            android:foregroundServiceType="location"/>
         <meta-data
             android:name="UMENG_APPKEY"
             android:value="5625e172e0f55a42350010da" />
