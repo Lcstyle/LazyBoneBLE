@@ -80,15 +80,14 @@ public class Bluemd extends Activity {
 	private ProgressDialog pDialog;
 	private ProgressDialog progressDialog;
 
-	private Boolean bootUp;
-	private Boolean GEOFENCE_MONITORING_ENABLED;
+	private static Boolean bootUp;
+	private static Boolean GEOFENCE_MONITORING_ENABLED;
 
-	private boolean mEnablingBT = false;
-	private boolean isModeConnectSuccess = false;
-	private boolean isNeedPassword = false;
-	private boolean isVerify = false;
-	private boolean ok = false;
-
+	private static boolean mEnablingBT = false;
+	private static boolean isModeConnectSuccess = false;
+	private static boolean isNeedPassword = false;
+	private static boolean isVerify = false;
+	private static boolean ok = false;
 	private static boolean isConnected = false;
 	private static boolean isOn = false;
 
