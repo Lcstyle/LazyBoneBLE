@@ -73,12 +73,12 @@ import static com.tinysine.lazyboneble.SettingsActivity.VANITY_NAME_KEY;
 public class Bluemd extends Activity {
 
 	private Context appContext;
-	private ImageView iv_connect_status;
+
 	private Button btn_connect_name;
 	private Button btn_status;
-
+	private ImageView iv_connect_status;
+	private ProgressDialog pDialog;
 	private ProgressDialog progressDialog;
-	private FirstTimeThread firstTimeThread;
 
 	private Boolean bootUp;
 	private Boolean GEOFENCE_MONITORING_ENABLED;
@@ -88,6 +88,7 @@ public class Bluemd extends Activity {
 	private boolean isNeedPassword = false;
 	private boolean isVerify = false;
 	private boolean ok = false;
+
 	private static boolean isConnected = false;
 	private static boolean isOn = false;
 
@@ -111,20 +112,22 @@ public class Bluemd extends Activity {
 	public static final int REQUEST_ENABLE_BT = 2;
 
 	private int status = Util.BT_DATA_PASSWORD;
+
 	private static final int BAIDU_READ_PHONE_STATE = 100;//Location permission request
 	private static final int PRIVATE_CODE = 1315;//Turn on GPS permissions
 
-	private UpdateThread updateThread = null;
-	private final Handler mHandler = new Handler();
-	private ProgressDialog pDialog;
-
+	private FirstTimeThread firstTimeThread;
 	private ModeThread modeThread = null;
+	private UpdateThread updateThread = null;
 
+	private final Handler mHandler = new Handler();
+
+	private BluetoothListenerReceiver receiver; //Bluetooth open and close monitoring service
 	private BroadcastReceiver locationTransitionReceiver;
 
 	private BluetoothAdapter mBluetoothAdapter = null;
+
 	private BluetoothLeService mBluetoothLeService;
-	private BluetoothListenerReceiver receiver; //Bluetooth open and close monitoring service
 
 	public SharedPreferences preferences;
 	private SharedPreferences defaultPreferences;
@@ -194,55 +197,6 @@ public class Bluemd extends Activity {
 		else
 			btn_status.setBackgroundResource(R.drawable.btn_normal);
 	}
-
-	public class BluetoothListenerReceiver extends BroadcastReceiver{
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction()))
-				{
-					int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
-					switch (blueState)
-						{
-							case BluetoothAdapter.STATE_TURNING_ON:
-								Log.e("onReceive:", "onReceive: Bluetooth is turning on");
-								break;
-							case BluetoothAdapter.STATE_ON:
-								Log.e("onReceive", "onReceive: Bluetooth is turned on");
-								if (!TextUtils.isEmpty(address))checkIsConnect();
-								break;
-							case BluetoothAdapter.STATE_TURNING_OFF:
-								Log.e("onReceive", "onReceive: Bluetooth is turning off");
-								break;
-							case BluetoothAdapter.STATE_OFF:
-								Log.e("onReceive", "onReceive: Bluetooth is off");
-								break;
-						}
-				}
-		}
-	}
-
-	public class locationTransitionReceiver extends BroadcastReceiver{
-		@Override
-		public void onReceive(Context context, Intent intent)
-			{
-				final String action = intent.getAction();
-				final boolean GEOFENCE = intent.getBooleanExtra("GEOFENCE", false);
-
-				if ((!(GEOFENCE) || GEOFENCE_MONITORING_ENABLED))
-					{
-						if (Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF.equals(action))
-							{
-								if (isOn)
-									shutDown(context);
-							}
-						else if (Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON.equals(action))
-							{
-								if (!(isOn))
-									autoStart(context);
-							}
-					}
-				}
-		}
 
 	private void autoStart(Context context)
 		{
@@ -500,62 +454,6 @@ public class Bluemd extends Activity {
 				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION}, BACKGROUND_LOCATION_ACCESS_REQUEST_CODE);
 		}
 
-	private IntentFilter makeBTAdptIntentFilter() {
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-		return filter;
-	}
-
-	public void registerNetworkCallback()
-		{
-			try {
-				ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
-				NetworkRequest.Builder builder = new NetworkRequest.Builder();
-				connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback()
-					{
-						@Override
-						public void onAvailable(Network network)
-							{
-								if (bootUp)
-									{
-										bootUp = false;
-									}
-								else if (isOn)
-									{
-										WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
-										String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
-										if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
-											{
-												Intent transition_broadcast = new Intent();
-												transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF);
-												sendBroadcast(transition_broadcast);
-											}
-									}
-							}
-
-						@Override
-						public void onLost(Network network)
-							{
-								if (!(isOn))
-									{
-										WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
-										String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
-										if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
-											{
-												Intent transition_broadcast = new Intent();
-												transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON);
-												sendBroadcast(transition_broadcast);
-											}
-									}
-							}
-					}
-
-				);
-
-			}catch (Exception e){
-			}
-		}
-
 	// Check whether positioning and gps are turned on
 	private void checkIsConnect() {
 		LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
@@ -591,6 +489,12 @@ public class Bluemd extends Activity {
 		}
 	}
 
+	private static IntentFilter makeBTAdptIntentFilter() {
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+		return filter;
+	}
+
 	private static IntentFilter makeGattUpdateIntentFilter() {
 		final IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
@@ -615,30 +519,6 @@ public class Bluemd extends Activity {
 
 		firstTimeThread = new FirstTimeThread();
 		firstTimeThread.start();
-	}
-
-	private class FirstTimeThread extends Thread {
-		boolean flag = true;
-
-		@Override
-		public void run() {
-			while (flag) {
-				if (isConnected) {
-					if (mBluetoothLeService != null) {
-						byte[] datas = { 0x5B };
-						mBluetoothLeService.WriteBytes(datas);
-					}
-				}
-				try {
-					sleep(500);
-				} catch (InterruptedException ignored) {
-				}
-			}
-		}
-
-		public void StopThread() {
-			flag = false;
-		}
 	}
 
 	@Override
@@ -826,7 +706,10 @@ public class Bluemd extends Activity {
 		unregisterReceiver(receiver);
 		unregisterReceiver(locationTransitionReceiver);
 		if (bg_loc_service_intent != null)
-			stopService(bg_loc_service_intent);
+			{
+				stopService(bg_loc_service_intent);
+				bg_loc_service_intent = null;
+			}
 	}
 
 	@Override
@@ -855,24 +738,6 @@ public class Bluemd extends Activity {
 		return super.onKeyDown(keyCode, event);
 	}
 
-	private void sendData(String hexValue) {
-		if (!isConnected)
-			return;
-		if (mBluetoothLeService != null) {
-			mBluetoothLeService.WriteString(hexValue);
-		}
-	}
-
-	public void liveData(String hexValue) {
-		if (!isConnected) {
-			resetDefault();
-			Intent serverIntent = new Intent(this, DeviceListActivity.class);
-			startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
-		} else {
-			sendData(hexValue);
-		}
-	}
-
 	private void live(String address) {
 		mBluetoothLeService.connect(address);
 		progressDialog = new ProgressDialog(this);
@@ -886,10 +751,34 @@ public class Bluemd extends Activity {
 		progressDialog.show();
 	}
 
+	private void liveData(String hexValue) {
+		if (!isConnected) {
+			resetDefault();
+			Intent serverIntent = new Intent(this, DeviceListActivity.class);
+			startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE);
+		} else {
+			sendData(hexValue);
+		}
+	}
+
+	private void sendData(String hexValue) {
+		if (!isConnected)
+			return;
+		if (mBluetoothLeService != null) {
+			mBluetoothLeService.WriteString(hexValue);
+		}
+	}
+
 	private void sendPassword(String password) {
 		status = Util.BT_DATA_PASSWORD;
 		sendData(password);
 	}
+
+	private void sendRegisteredPassword()
+		{
+			String paString = "3F" + int2Byte(reg_dev_password);
+			sendPassword(paString);
+		}
 
 	private void saveRegisteredDevicePassword(String password)
 		{
@@ -904,12 +793,6 @@ public class Bluemd extends Activity {
 	private void resetPassword(String password) {
 		sendData(password);
 	}
-
-	private void sendRegisteredPassword()
-		{
-			String paString = "3F" + int2Byte(reg_dev_password);
-			sendPassword(paString);
-		}
 
 	private void popEditPassword() {
 		final EditText eText = new EditText(this);
@@ -964,6 +847,124 @@ public class Bluemd extends Activity {
 		}
 	}
 
+	public void onModifyName(View v) {
+		final EditText eText = new EditText(this);
+		new AlertDialog.Builder(this).setTitle("Please input new name")
+				.setIcon(android.R.drawable.ic_dialog_info).setView(eText)
+				.setCancelable(false)
+				.setPositiveButton("OK", (arg0, arg1) -> {
+					String newName = eText.getText().toString();
+					if (!newName.equals("")) {
+						Editor editor = preferences.edit();
+						editor.putString(mConnectedDeviceAddress, newName);
+						editor.putString(registered_device_name_key, newName);
+						editor.putString(DeviceListActivity.registered_device_addr_key, mConnectedDeviceAddress);
+						editor.apply();
+						setConnectName();
+						DeviceListActivity.MATCH_NAME = newName;
+						Toast.makeText(Bluemd.this, "Device Renamed and Registered for AutoConnect!", Toast.LENGTH_SHORT).show();
+					}
+				}).setNegativeButton("Cancel", null).create().show();
+	}
+
+	private void registerNetworkCallback()
+		{
+			try {
+				ConnectivityManager connectivityManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+				NetworkRequest.Builder builder = new NetworkRequest.Builder();
+				connectivityManager.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback()
+					{
+						@Override
+						public void onAvailable(Network network)
+							{
+								if (bootUp)
+									{
+										bootUp = false;
+									}
+								else if (isOn)
+									{
+										WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
+										String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
+										if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
+											{
+												Intent transition_broadcast = new Intent();
+												transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF);
+												sendBroadcast(transition_broadcast);
+											}
+									}
+							}
+
+						@Override
+						public void onLost(Network network)
+							{
+								if (!(isOn))
+									{
+										WifiManager wm = (WifiManager) appContext.getSystemService(WIFI_SERVICE);
+										String ssid = wm.getConnectionInfo().getSSID().replace("\"", "");
+										if (ssid.toLowerCase(Locale.ROOT).equals(AUTO_CONNECT_WIFI_TRIGGER_DEV_NAME.toLowerCase(Locale.ROOT)))
+											{
+												Intent transition_broadcast = new Intent();
+												transition_broadcast.setAction(Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON);
+												sendBroadcast(transition_broadcast);
+											}
+									}
+							}
+					}
+
+				);
+
+			}catch (Exception e){
+			}
+		}
+
+	private class FirstTimeThread extends Thread {
+		boolean flag = true;
+
+		@Override
+		public void run() {
+			while (flag) {
+				if (isConnected) {
+					if (mBluetoothLeService != null) {
+						byte[] datas = { 0x5B };
+						mBluetoothLeService.WriteBytes(datas);
+					}
+				}
+				try {
+					sleep(500);
+				} catch (InterruptedException ignored) {
+				}
+			}
+		}
+
+		public void StopThread() {
+			flag = false;
+		}
+	}
+
+	private class ModeThread extends Thread
+		{
+			private boolean isStop = false;
+
+			@Override
+			public void run()
+				{
+					super.run();
+					try
+						{
+							sleep(3000);
+							if (!isStop && !isModeConnectSuccess)
+								sendStatus();
+						} catch (Exception ignored)
+						{
+						}
+				}
+
+			public void modeStop()
+				{
+					isStop = true;
+				}
+		}
+
 	private class UpdateThread extends Thread {
 		boolean flag = true;
 		int count = 0;
@@ -998,47 +999,52 @@ public class Bluemd extends Activity {
 		}
 	}
 
-	public void onModifyName(View v) {
-		final EditText eText = new EditText(this);
-		new AlertDialog.Builder(this).setTitle("Please input new name")
-				.setIcon(android.R.drawable.ic_dialog_info).setView(eText)
-				.setCancelable(false)
-				.setPositiveButton("OK", (arg0, arg1) -> {
-					String newName = eText.getText().toString();
-					if (!newName.equals("")) {
-						Editor editor = preferences.edit();
-						editor.putString(mConnectedDeviceAddress, newName);
-						editor.putString(registered_device_name_key, newName);
-						editor.putString(DeviceListActivity.registered_device_addr_key, mConnectedDeviceAddress);
-						editor.apply();
-						setConnectName();
-						DeviceListActivity.MATCH_NAME = newName;
-						Toast.makeText(Bluemd.this, "Device Renamed and Registered for AutoConnect!", Toast.LENGTH_SHORT).show();
-					}
-				}).setNegativeButton("Cancel", null).create().show();
-	}
-
-	private class ModeThread extends Thread
-		{
-			private boolean isStop = false;
-
-			@Override
-			public void run()
+	public class BluetoothListenerReceiver extends BroadcastReceiver{
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction()))
 				{
-					super.run();
-					try
+					int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
+					switch (blueState)
 						{
-							sleep(3000);
-							if (!isStop && !isModeConnectSuccess)
-								sendStatus();
-						} catch (Exception ignored)
-						{
+							case BluetoothAdapter.STATE_TURNING_ON:
+								Log.e("onReceive:", "onReceive: Bluetooth is turning on");
+								break;
+							case BluetoothAdapter.STATE_ON:
+								Log.e("onReceive", "onReceive: Bluetooth is turned on");
+								if (!TextUtils.isEmpty(address))checkIsConnect();
+								break;
+							case BluetoothAdapter.STATE_TURNING_OFF:
+								Log.e("onReceive", "onReceive: Bluetooth is turning off");
+								break;
+							case BluetoothAdapter.STATE_OFF:
+								Log.e("onReceive", "onReceive: Bluetooth is off");
+								break;
 						}
 				}
-
-			public void modeStop()
-				{
-					isStop = true;
-				}
 		}
+	}
+
+	public class locationTransitionReceiver extends BroadcastReceiver{
+		@Override
+		public void onReceive(Context context, Intent intent)
+			{
+				final String action = intent.getAction();
+				final boolean GEOFENCE = intent.getBooleanExtra("GEOFENCE", false);
+
+				if ((!(GEOFENCE) || GEOFENCE_MONITORING_ENABLED))
+					{
+						if (Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_OFF.equals(action))
+							{
+								if (isOn)
+									shutDown(context);
+							}
+						else if (Bluemd.TRANSITION_RCVR_REQUEST_SWITCH_ON.equals(action))
+							{
+								if (!(isOn))
+									autoStart(context);
+							}
+					}
+			}
+	}
 }
